@@ -13,6 +13,12 @@ const { title = "Weather App" } = Astro.props;
       content="Aplicación web del clima hecha con Astro. Permite consultar el clima de una ciudad con una interfaz moderna y minimalista."
     />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+    <script is:inline>
+      const savedTheme = localStorage.getItem("theme");
+      const theme = savedTheme === "dark" ? "dark" : "light";
+      document.documentElement.setAttribute("data-theme", theme);
+    </script>
   </head>
   <body>
     <slot />
