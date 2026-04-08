@@ -1,13 +1,42 @@
 import type { APIRoute } from "astro";
 
-export const GET: APIRoute = async ({ request }) => {
+export const prerender = false;
+
+export const POST: APIRoute = async ({ request }) => {
   try {
-    const url = new URL(request.url);
-    const city = url.searchParams.get("city");
+    console.log("Método recibido:", request.method);
+    console.log("Headers content-type:", request.headers.get("content-type"));
+
+    const rawBody = await request.text();
+    console.log("Body crudo recibido:", rawBody);
+
+    let body: unknown = null;
+
+    try {
+      body = rawBody ? JSON.parse(rawBody) : null;
+    } catch {
+      return new Response(
+        JSON.stringify({ error: "El body no es JSON válido" }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    const city =
+      typeof body === "object" &&
+      body !== null &&
+      "city" in body &&
+      typeof body.city === "string"
+        ? body.city.trim()
+        : "";
+
+    console.log("Ciudad parseada:", city);
 
     if (!city) {
       return new Response(
-        JSON.stringify({ error: "Falta el parámetro city" }),
+        JSON.stringify({ error: "Falta la ciudad en el body" }),
         {
           status: 400,
           headers: { "Content-Type": "application/json" },
@@ -19,7 +48,9 @@ export const GET: APIRoute = async ({ request }) => {
 
     if (!apiKey) {
       return new Response(
-        JSON.stringify({ error: "Falta configurar WEATHER_API_KEY en .env.local" }),
+        JSON.stringify({
+          error: "Falta configurar WEATHER_API_KEY en .env.local",
+        }),
         {
           status: 500,
           headers: { "Content-Type": "application/json" },
@@ -35,29 +66,36 @@ export const GET: APIRoute = async ({ request }) => {
     apiUrl.searchParams.set("alerts", "no");
     apiUrl.searchParams.set("lang", "es");
 
-    const response = await fetch(apiUrl);
+    const apiResponse = await fetch(apiUrl);
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => null);
+    const apiText = await apiResponse.text();
+
+    if (!apiResponse.ok) {
+      console.log("Respuesta de WeatherAPI con error:", apiText);
+
+      let parsedError: any = null;
+      try {
+        parsedError = JSON.parse(apiText);
+      } catch {}
 
       return new Response(
         JSON.stringify({
-          error: errorData?.error?.message || "No se pudo obtener el clima",
+          error: parsedError?.error?.message || "No se pudo obtener el clima",
         }),
         {
-          status: response.status,
+          status: apiResponse.status,
           headers: { "Content-Type": "application/json" },
         }
       );
     }
 
-    const data = await response.json();
-
-    return new Response(JSON.stringify(data), {
+    return new Response(apiText, {
       status: 200,
       headers: { "Content-Type": "application/json" },
     });
   } catch (error) {
+    console.error("Error en /api/weather:", error);
+
     return new Response(
       JSON.stringify({
         error: "Ocurrió un error inesperado al consultar el clima",
