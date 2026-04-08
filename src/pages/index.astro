@@ -1,17 +1,86 @@
 ---
-
+import MainLayout from "../layouts/MainLayout.astro";
+import Header from "../components/Header.astro";
+import Hero from "../components/Hero.astro";
+import SectionTitle from "../components/SectionTitle.astro";
+import "../styles/global.css";
 ---
 
-<html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro</title>
-	</head>
-	<body>
-		<h1>Astro</h1>
-	</body>
-</html>
+<MainLayout title="SkyCast | App del clima">
+  <Header />
+  <main>
+    <Hero />
+
+    <section id="actual" class="section">
+      <div class="container">
+        <SectionTitle
+          eyebrow="Sección 1"
+          title="Clima actual"
+          text="Acá vamos a mostrar la temperatura, sensación térmica y estado general del clima de la ciudad buscada."
+        />
+
+        <div class="grid cards-3">
+          <article class="card">
+            <h3>Temperatura</h3>
+            <p class="big-number">--°C</p>
+            <p>Dato principal del clima actual.</p>
+          </article>
+
+          <article class="card">
+            <h3>Estado</h3>
+            <p class="big-number">--</p>
+            <p>Descripción breve del estado del cielo o condición meteorológica.</p>
+          </article>
+
+          <article class="card">
+            <h3>Sensación térmica</h3>
+            <p class="big-number">--°C</p>
+            <p>Comparación entre temperatura real y percibida.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="detalles" class="section alt-section">
+      <div class="container">
+        <SectionTitle
+          eyebrow="Sección 2"
+          title="Detalles adicionales"
+          text="Esta parte va a incluir indicadores más visuales, como humedad, viento, presión y visibilidad."
+        />
+
+        <div class="grid cards-2">
+          <article class="card">
+            <h3>Indicadores visuales</h3>
+            <p>
+              Más adelante vamos a agregar barras, medidores e íconos para que no todo sea texto
+              o números.
+            </p>
+          </article>
+
+          <article class="card">
+            <h3>Componentes reutilizables</h3>
+            <p>
+              La app va a estar separada en componentes para cumplir mejor con los extras y mantener
+              el código más ordenado.
+            </p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="pronostico" class="section">
+      <div class="container">
+        <SectionTitle
+          eyebrow="Sección 3"
+          title="Pronóstico"
+          text="Después vamos a sumar una sección con previsión horaria o por días para que la página se vea más tipo dashboard."
+        />
+
+        <div class="card forecast-placeholder">
+          <p>Próximamente: tarjetas de pronóstico con diseño visual.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+</MainLayout>
