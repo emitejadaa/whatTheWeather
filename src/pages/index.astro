@@ -102,6 +102,31 @@ import "../styles/global.css";
             </div>
           </article>
         </div>
+
+		<div class="grid cards-3 extra-details-grid">
+			<MetricCard
+				title="Presión"
+				valueId="pressure-value"
+				value="-- mb"
+				description="Presión atmosférica actual."
+			/>
+
+			<MetricCard
+				title="Visibilidad"
+				valueId="visibility-value"
+				value="-- km"
+				description="Distancia de visibilidad estimada."
+			/>
+
+			<MetricCard
+				title="Hora local"
+				valueId="localtime-value"
+				value="--"
+				description="Hora local de la ciudad consultada."
+				largeLabel={true}
+			/>
+			</div>
+		
       </div>
     </section>
 

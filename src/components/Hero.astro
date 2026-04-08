@@ -31,6 +31,9 @@
           <p class="preview-label">Clima actual</p>
           <h2 id="hero-temp">--°C</h2>
           <p id="hero-city" class="preview-city">Esperando búsqueda...</p>
+          <p id="hero-mini-details" class="hero-mini-details">
+            Humedad -- • Viento --
+          </p>
         </div>
       </div>
     </div>
@@ -41,24 +44,12 @@
   function getWeatherEmoji(text) {
     const value = text.toLowerCase();
 
-    if (value.includes("sun") || value.includes("soleado") || value.includes("despejado")) {
-      return "☀️";
-    }
-    if (value.includes("cloud") || value.includes("nublado")) {
-      return "☁️";
-    }
-    if (value.includes("rain") || value.includes("lluv")) {
-      return "🌧️";
-    }
-    if (value.includes("storm") || value.includes("torment")) {
-      return "⛈️";
-    }
-    if (value.includes("snow") || value.includes("nieve")) {
-      return "❄️";
-    }
-    if (value.includes("mist") || value.includes("fog") || value.includes("niebla")) {
-      return "🌫️";
-    }
+    if (value.includes("sun") || value.includes("soleado") || value.includes("despejado")) return "☀️";
+    if (value.includes("cloud") || value.includes("nublado")) return "☁️";
+    if (value.includes("rain") || value.includes("lluv")) return "🌧️";
+    if (value.includes("storm") || value.includes("torment")) return "⛈️";
+    if (value.includes("snow") || value.includes("nieve")) return "❄️";
+    if (value.includes("mist") || value.includes("fog") || value.includes("niebla")) return "🌫️";
 
     return "🌤️";
   }
@@ -80,39 +71,31 @@
         month: "short",
       });
 
+      const avgTemp = Math.round(day.day.avgtemp_c);
+      const maxTemp = Math.round(day.day.maxtemp_c);
+      const minTemp = Math.round(day.day.mintemp_c);
+      const chanceOfRain = day.day.daily_chance_of_rain;
+      const icon = getWeatherEmoji(day.day.condition.text);
+
       item.innerHTML = `
         <p class="forecast-day">${formattedDate}</p>
-        <p class="forecast-emoji">${getWeatherEmoji(day.day.condition.text)}</p>
+        <p class="forecast-emoji">${icon}</p>
         <p class="forecast-condition">${day.day.condition.text}</p>
-        <p class="forecast-range">${Math.round(day.day.maxtemp_c)}° / ${Math.round(day.day.mintemp_c)}°</p>
+        <p class="forecast-range">${maxTemp}° / ${minTemp}°</p>
+        <div class="forecast-meta">
+          <span>Prom: ${avgTemp}°</span>
+          <span>Lluvia: ${chanceOfRain}%</span>
+        </div>
       `;
 
       forecastContainer.appendChild(item);
     });
   }
 
-function renderWeather(data) {
+  function renderWeather(data) {
     const current = data.current;
     const location = data.location;
     const forecastDays = data.forecast?.forecastday ?? [];
-
-    const heroTemp = document.querySelector("#hero-temp");
-    const heroCity = document.querySelector("#hero-city");
-    const heroIcon = document.querySelector("#hero-icon");
-
-    const tempCard = document.querySelector("#temp-value");
-    const conditionCard = document.querySelector("#condition-value");
-    const feelsLikeCard = document.querySelector("#feelslike-value");
-    const humidityCard = document.querySelector("#humidity-value");
-    const windCard = document.querySelector("#wind-value");
-    const locationCard = document.querySelector("#location-value");
-
-    const feelsLikeMeterValue = document.querySelector("#feelslike-meter-value");
-    const humidityFill = document.querySelector("#humidity-fill");
-    const feelsLikeFill = document.querySelector("#feelslike-fill");
-
-    const summaryIcon = document.querySelector("#summary-icon");
-    const summaryText = document.querySelector("#summary-text");
 
     const conditionText = current.condition.text;
     const emoji = getWeatherEmoji(conditionText);
@@ -121,129 +104,126 @@ function renderWeather(data) {
     const roundedFeelsLike = Math.round(current.feelslike_c);
     const humidity = Number(current.humidity);
     const wind = Math.round(current.wind_kph);
+    const pressure = Math.round(current.pressure_mb);
+    const visibility = Number(current.vis_km);
 
-    if (heroTemp) heroTemp.textContent = `${roundedTemp}°C`;
-    if (heroCity) heroCity.textContent = `${location.name}, ${location.country}`;
-    if (heroIcon) heroIcon.textContent = emoji;
+    // HERO
+    document.querySelector("#hero-temp").textContent = `${roundedTemp}°C`;
+    document.querySelector("#hero-city").textContent = `${location.name}, ${location.country}`;
+    document.querySelector("#hero-icon").textContent = emoji;
 
-    if (tempCard) tempCard.textContent = `${roundedTemp}°C`;
-    if (conditionCard) conditionCard.textContent = conditionText;
-    if (feelsLikeCard) feelsLikeCard.textContent = `${roundedFeelsLike}°C`;
-    if (humidityCard) humidityCard.textContent = `${humidity}%`;
-    if (windCard) windCard.textContent = `${wind} km/h`;
-    if (locationCard) locationCard.textContent = `${location.name}, ${location.region}`;
-
-    if (feelsLikeMeterValue) feelsLikeMeterValue.textContent = `${roundedFeelsLike}°C`;
-
-    if (humidityFill instanceof HTMLElement) {
-        humidityFill.style.width = `${Math.min(Math.max(humidity, 0), 100)}%`;
+    const heroMiniDetails = document.querySelector("#hero-mini-details");
+    if (heroMiniDetails) {
+      heroMiniDetails.textContent = `Humedad ${humidity}% • Viento ${wind} km/h`;
     }
 
-    const feelsLikePercent = Math.min(Math.max(((roundedFeelsLike + 10) / 50) * 100, 0), 100);
-    if (feelsLikeFill instanceof HTMLElement) {
-        feelsLikeFill.style.width = `${feelsLikePercent}%`;
-    }
+    // CARDS
+    document.querySelector("#temp-value").textContent = `${roundedTemp}°C`;
+    document.querySelector("#condition-value").textContent = conditionText;
+    document.querySelector("#feelslike-value").textContent = `${roundedFeelsLike}°C`;
+    document.querySelector("#humidity-value").textContent = `${humidity}%`;
+    document.querySelector("#wind-value").textContent = `${wind} km/h`;
+    document.querySelector("#location-value").textContent = `${location.name}, ${location.region}`;
 
-    if (summaryIcon) summaryIcon.textContent = emoji;
-    if (summaryText) {
-        summaryText.textContent = `En ${location.name} el clima actual es ${conditionText.toLowerCase()}, con ${roundedTemp}°C y viento de ${wind} km/h.`;
-    }
+    document.querySelector("#pressure-value").textContent = `${pressure} mb`;
+    document.querySelector("#visibility-value").textContent = `${visibility} km`;
+    document.querySelector("#localtime-value").textContent = location.localtime;
 
+    // METERS
+    document.querySelector("#feelslike-meter-value").textContent = `${roundedFeelsLike}°C`;
+
+    const humidityFill = document.querySelector("#humidity-fill");
+    if (humidityFill) humidityFill.style.width = `${humidity}%`;
+
+    const feelsLikePercent = ((roundedFeelsLike + 10) / 50) * 100;
+    const feelsLikeFill = document.querySelector("#feelslike-fill");
+    if (feelsLikeFill) feelsLikeFill.style.width = `${Math.min(Math.max(feelsLikePercent, 0), 100)}%`;
+
+    // SUMMARY
+    document.querySelector("#summary-icon").textContent = emoji;
+    document.querySelector("#summary-text").textContent =
+      `En ${location.name} el clima es ${conditionText.toLowerCase()}, con ${roundedTemp}°C, humedad ${humidity}% y viento de ${wind} km/h.`;
+
+    // FORECAST
     renderForecast(forecastDays);
-    }
+  }
 
   async function fetchWeather(city) {
     const status = document.querySelector("#form-status");
     const button = document.querySelector("#search-button");
 
-    if (status) status.textContent = "Buscando clima...";
-    if (button) button.setAttribute("disabled", "true");
+    if (status) {
+      status.textContent = "Buscando clima...";
+      status.classList.remove("status-error", "status-success");
+    }
+
+    if (button) button.disabled = true;
 
     try {
-      console.log("Enviando city al backend:", city);
-
       const response = await fetch("/api/weather", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
+          "Content-Type": "application/json"
         },
-        body: JSON.stringify({ city }),
+        body: JSON.stringify({ city })
       });
 
-      const text = await response.text();
-      console.log("Respuesta cruda:", text);
-
-      let data;
-      try {
-        data = JSON.parse(text);
-      } catch {
-        throw new Error("La respuesta del servidor no es JSON válido");
-      }
+      const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "No se pudo obtener la información");
+        throw new Error(data.error || "Error al obtener clima");
       }
 
       renderWeather(data);
-      if (status) status.textContent = `Mostrando resultados para ${data.location.name}.`;
+
+      if (status) {
+        status.textContent = `Mostrando resultados para ${data.location.name}`;
+        status.classList.add("status-success");
+      }
+
     } catch (error) {
       console.error(error);
+
       if (status) {
         status.textContent =
-          error instanceof Error
-            ? error.message
-            : "Ocurrió un error al buscar la ciudad.";
+          error instanceof Error ? error.message : "Error inesperado";
+        status.classList.add("status-error");
       }
+
     } finally {
-      if (button) button.removeAttribute("disabled");
+      if (button) button.disabled = false;
     }
   }
 
-  function setupWeatherSearch() {
+  function setupWeather() {
     const input = document.querySelector("#city-input");
     const button = document.querySelector("#search-button");
 
-    if (!(input instanceof HTMLInputElement) || !(button instanceof HTMLButtonElement)) {
-      console.log("No se encontraron input o botón del clima");
-      return;
-    }
+    if (!(input instanceof HTMLInputElement)) return;
+    if (!(button instanceof HTMLButtonElement)) return;
 
-    button.addEventListener("click", async () => {
+    button.addEventListener("click", () => {
       const city = input.value.trim();
-      console.log("City desde input:", city);
-
-      if (!city) {
-        const status = document.querySelector("#form-status");
-        if (status) status.textContent = "Ingresá una ciudad antes de buscar.";
-        return;
-      }
-
-      await fetchWeather(city);
+      if (!city) return;
+      fetchWeather(city);
     });
 
-    input.addEventListener("keydown", async (event) => {
-      if (event.key === "Enter") {
-        event.preventDefault();
-
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
         const city = input.value.trim();
-        console.log("City desde Enter:", city);
-
-        if (!city) {
-          const status = document.querySelector("#form-status");
-          if (status) status.textContent = "Ingresá una ciudad antes de buscar.";
-          return;
-        }
-
-        await fetchWeather(city);
+        if (!city) return;
+        fetchWeather(city);
       }
     });
 
+    // Carga inicial
     fetchWeather("Buenos Aires");
   }
 
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", setupWeatherSearch);
+    document.addEventListener("DOMContentLoaded", setupWeather);
   } else {
-    setupWeatherSearch();
+    setupWeather();
   }
 </script>
