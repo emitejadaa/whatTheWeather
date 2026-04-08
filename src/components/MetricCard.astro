@@ -1,0 +1,25 @@
+---
+interface Props {
+  title: string;
+  valueId: string;
+  value?: string;
+  description: string;
+  largeLabel?: boolean;
+}
+
+const {
+  title,
+  valueId,
+  value = "--",
+  description,
+  largeLabel = false
+} = Astro.props;
+---
+
+<article class="card metric-card">
+  <h3>{title}</h3>
+  <p id={valueId} class:list={["big-number", { "big-label": largeLabel }]}>
+    {value}
+  </p>
+  <p>{description}</p>
+</article>

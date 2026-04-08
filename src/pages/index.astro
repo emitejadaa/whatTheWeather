@@ -3,6 +3,8 @@ import MainLayout from "../layouts/MainLayout.astro";
 import Header from "../components/Header.astro";
 import Hero from "../components/Hero.astro";
 import SectionTitle from "../components/SectionTitle.astro";
+import MetricCard from "../components/MetricCard.astro";
+import DetailMeter from "../components/DetailMeter.astro";
 import "../styles/global.css";
 ---
 
@@ -20,23 +22,27 @@ import "../styles/global.css";
         />
 
         <div class="grid cards-3">
-          <article class="card">
-            <h3>Temperatura</h3>
-            <p id="temp-value" class="big-number">--°C</p>
-            <p>Temperatura actual registrada.</p>
-          </article>
+          <MetricCard
+            title="Temperatura"
+            valueId="temp-value"
+            value="--°C"
+            description="Temperatura actual registrada."
+          />
 
-          <article class="card">
-            <h3>Estado</h3>
-            <p id="condition-value" class="big-number big-label">--</p>
-            <p>Condición meteorológica actual.</p>
-          </article>
+          <MetricCard
+            title="Estado"
+            valueId="condition-value"
+            value="--"
+            description="Condición meteorológica actual."
+            largeLabel={true}
+          />
 
-          <article class="card">
-            <h3>Sensación térmica</h3>
-            <p id="feelslike-value" class="big-number">--°C</p>
-            <p>Temperatura percibida.</p>
-          </article>
+          <MetricCard
+            title="Sensación térmica"
+            valueId="feelslike-value"
+            value="--°C"
+            description="Temperatura percibida."
+          />
         </div>
       </div>
     </section>
@@ -45,27 +51,55 @@ import "../styles/global.css";
       <div class="container">
         <SectionTitle
           eyebrow="Sección 2"
-          title="Detalles adicionales"
-          text="Datos complementarios que después vamos a volver más visuales con barras e indicadores."
+          title="Detalles visuales"
+          text="Indicadores complementarios mostrados de una forma más gráfica para que la app se sienta más tipo dashboard."
         />
 
         <div class="grid cards-3">
-          <article class="card">
-            <h3>Humedad</h3>
-            <p id="humidity-value" class="big-number">--%</p>
-            <p>Nivel de humedad relativa.</p>
-          </article>
+          <DetailMeter
+            title="Humedad"
+            valueId="humidity-value"
+            fillId="humidity-fill"
+            value="--%"
+            description="Nivel de humedad relativa actual."
+          />
 
-          <article class="card">
-            <h3>Viento</h3>
-            <p id="wind-value" class="big-number">-- km/h</p>
-            <p>Velocidad actual del viento.</p>
-          </article>
+          <DetailMeter
+            title="Sensación térmica"
+            valueId="feelslike-meter-value"
+            fillId="feelslike-fill"
+            value="--°C"
+            description="Representación visual de la temperatura percibida."
+          />
 
-          <article class="card">
-            <h3>Ubicación</h3>
-            <p id="location-value" class="big-number big-label">--</p>
-            <p>Ciudad y región consultadas.</p>
+          <MetricCard
+            title="Viento"
+            valueId="wind-value"
+            value="-- km/h"
+            description="Velocidad actual del viento."
+          />
+        </div>
+
+        <div class="grid cards-2 extra-details-grid">
+          <MetricCard
+            title="Ubicación"
+            valueId="location-value"
+            value="--"
+            description="Ciudad y región consultadas."
+            largeLabel={true}
+          />
+
+          <article class="card summary-card">
+            <h3>Resumen rápido</h3>
+            <div class="summary-inline">
+              <span id="summary-icon" class="summary-icon">🌤️</span>
+              <div>
+                <p id="summary-text" class="summary-text">Esperando datos del clima...</p>
+                <p class="summary-subtext">
+                  Esta tarjeta resume de forma rápida el estado general de la ciudad buscada.
+                </p>
+              </div>
+            </div>
           </article>
         </div>
       </div>
@@ -76,7 +110,7 @@ import "../styles/global.css";
         <SectionTitle
           eyebrow="Sección 3"
           title="Pronóstico corto"
-          text="Vista rápida de los próximos días. Más adelante lo vamos a convertir en una parte todavía más visual."
+          text="Vista rápida de los próximos días. Después podemos mejorar todavía más esta sección."
         />
 
         <div id="forecast-list" class="forecast-grid">

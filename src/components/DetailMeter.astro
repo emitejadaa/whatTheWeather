@@ -1,0 +1,30 @@
+---
+interface Props {
+  title: string;
+  valueId: string;
+  fillId: string;
+  value?: string;
+  description: string;
+}
+
+const {
+  title,
+  valueId,
+  fillId,
+  value = "--",
+  description
+} = Astro.props;
+---
+
+<article class="card detail-meter">
+  <div class="detail-meter-top">
+    <h3>{title}</h3>
+    <p id={valueId} class="detail-meter-value">{value}</p>
+  </div>
+
+  <div class="meter">
+    <div id={fillId} class="meter-fill"></div>
+  </div>
+
+  <p>{description}</p>
+</article>

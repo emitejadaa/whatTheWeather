@@ -91,7 +91,7 @@
     });
   }
 
-  function renderWeather(data) {
+function renderWeather(data) {
     const current = data.current;
     const location = data.location;
     const forecastDays = data.forecast?.forecastday ?? [];
@@ -107,22 +107,50 @@
     const windCard = document.querySelector("#wind-value");
     const locationCard = document.querySelector("#location-value");
 
+    const feelsLikeMeterValue = document.querySelector("#feelslike-meter-value");
+    const humidityFill = document.querySelector("#humidity-fill");
+    const feelsLikeFill = document.querySelector("#feelslike-fill");
+
+    const summaryIcon = document.querySelector("#summary-icon");
+    const summaryText = document.querySelector("#summary-text");
+
     const conditionText = current.condition.text;
     const emoji = getWeatherEmoji(conditionText);
 
-    if (heroTemp) heroTemp.textContent = `${Math.round(current.temp_c)}°C`;
+    const roundedTemp = Math.round(current.temp_c);
+    const roundedFeelsLike = Math.round(current.feelslike_c);
+    const humidity = Number(current.humidity);
+    const wind = Math.round(current.wind_kph);
+
+    if (heroTemp) heroTemp.textContent = `${roundedTemp}°C`;
     if (heroCity) heroCity.textContent = `${location.name}, ${location.country}`;
     if (heroIcon) heroIcon.textContent = emoji;
 
-    if (tempCard) tempCard.textContent = `${Math.round(current.temp_c)}°C`;
+    if (tempCard) tempCard.textContent = `${roundedTemp}°C`;
     if (conditionCard) conditionCard.textContent = conditionText;
-    if (feelsLikeCard) feelsLikeCard.textContent = `${Math.round(current.feelslike_c)}°C`;
-    if (humidityCard) humidityCard.textContent = `${current.humidity}%`;
-    if (windCard) windCard.textContent = `${current.wind_kph} km/h`;
+    if (feelsLikeCard) feelsLikeCard.textContent = `${roundedFeelsLike}°C`;
+    if (humidityCard) humidityCard.textContent = `${humidity}%`;
+    if (windCard) windCard.textContent = `${wind} km/h`;
     if (locationCard) locationCard.textContent = `${location.name}, ${location.region}`;
 
+    if (feelsLikeMeterValue) feelsLikeMeterValue.textContent = `${roundedFeelsLike}°C`;
+
+    if (humidityFill instanceof HTMLElement) {
+        humidityFill.style.width = `${Math.min(Math.max(humidity, 0), 100)}%`;
+    }
+
+    const feelsLikePercent = Math.min(Math.max(((roundedFeelsLike + 10) / 50) * 100, 0), 100);
+    if (feelsLikeFill instanceof HTMLElement) {
+        feelsLikeFill.style.width = `${feelsLikePercent}%`;
+    }
+
+    if (summaryIcon) summaryIcon.textContent = emoji;
+    if (summaryText) {
+        summaryText.textContent = `En ${location.name} el clima actual es ${conditionText.toLowerCase()}, con ${roundedTemp}°C y viento de ${wind} km/h.`;
+    }
+
     renderForecast(forecastDays);
-  }
+    }
 
   async function fetchWeather(city) {
     const status = document.querySelector("#form-status");
