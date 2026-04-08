@@ -2,27 +2,165 @@
   <div class="container hero-content">
     <div class="hero-text">
       <p class="eyebrow">Weather dashboard</p>
-      <h1>Consultá el clima de cualquier ciudad con una interfaz moderna y clara</h1>
+      <h1>Consultá el clima de cualquier ciudad</h1>
       <p class="hero-description">
-        Una aplicación del clima hecha con Astro, diseño minimalista, tema claro con opción
-        de modo oscuro, componentes reutilizables y datos obtenidos desde una API externa.
+        Buscá una ubicación y obtené el clima actual con una interfaz moderna,
+        simple y preparada para seguir creciendo con más visualizaciones.
       </p>
 
-      <div class="hero-actions">
-        <a href="#actual" class="button primary">Ver dashboard</a>
-        <a href="#detalles" class="button secondary">Explorar secciones</a>
-      </div>
+      <form id="weather-form" class="search-form">
+        <label for="city-input" class="sr-only">Ingresar ciudad</label>
+        <input
+          id="city-input"
+          name="city"
+          type="text"
+          placeholder="Ej: Buenos Aires"
+          autocomplete="off"
+        />
+        <button type="submit" class="button primary">Buscar</button>
+      </form>
+
+      <p id="form-status" class="form-status" aria-live="polite"></p>
     </div>
 
     <div class="hero-card">
       <div class="weather-preview">
-        <span class="weather-icon">☀️</span>
+        <span id="hero-icon" class="weather-icon">☀️</span>
         <div>
-          <p class="preview-label">Ejemplo visual</p>
-          <h2>24°C</h2>
-          <p class="preview-city">Buenos Aires</p>
+          <p class="preview-label">Clima actual</p>
+          <h2 id="hero-temp">--°C</h2>
+          <p id="hero-city" class="preview-city">Esperando búsqueda...</p>
         </div>
       </div>
     </div>
   </div>
 </section>
+
+<script>
+  const form = document.querySelector("#weather-form");
+  const input = document.querySelector("#city-input");
+  const status = document.querySelector("#form-status");
+
+  const heroTemp = document.querySelector("#hero-temp");
+  const heroCity = document.querySelector("#hero-city");
+  const heroIcon = document.querySelector("#hero-icon");
+
+  const tempCard = document.querySelector("#temp-value");
+  const conditionCard = document.querySelector("#condition-value");
+  const feelsLikeCard = document.querySelector("#feelslike-value");
+  const humidityCard = document.querySelector("#humidity-value");
+  const windCard = document.querySelector("#wind-value");
+  const locationCard = document.querySelector("#location-value");
+
+  const forecastContainer = document.querySelector("#forecast-list");
+
+  function getWeatherEmoji(text) {
+    const value = text.toLowerCase();
+
+    if (value.includes("sun") || value.includes("soleado") || value.includes("despejado")) {
+      return "☀️";
+    }
+    if (value.includes("cloud") || value.includes("nublado")) {
+      return "☁️";
+    }
+    if (value.includes("rain") || value.includes("lluv")) {
+      return "🌧️";
+    }
+    if (value.includes("storm") || value.includes("torment")) {
+      return "⛈️";
+    }
+    if (value.includes("snow") || value.includes("nieve")) {
+      return "❄️";
+    }
+    if (value.includes("mist") || value.includes("fog") || value.includes("niebla")) {
+      return "🌫️";
+    }
+
+    return "🌤️";
+  }
+
+  function renderForecast(days) {
+    if (!forecastContainer) return;
+
+    forecastContainer.innerHTML = "";
+
+    days.forEach((day) => {
+      const item = document.createElement("article");
+      item.className = "forecast-item";
+
+      const date = new Date(day.date + "T12:00:00");
+      const formattedDate = date.toLocaleDateString("es-AR", {
+        weekday: "short",
+        day: "numeric",
+        month: "short",
+      });
+
+      item.innerHTML = `
+        <p class="forecast-day">${formattedDate}</p>
+        <p class="forecast-emoji">${getWeatherEmoji(day.day.condition.text)}</p>
+        <p class="forecast-condition">${day.day.condition.text}</p>
+        <p class="forecast-range">${Math.round(day.day.maxtemp_c)}° / ${Math.round(day.day.mintemp_c)}°</p>
+      `;
+
+      forecastContainer.appendChild(item);
+    });
+  }
+
+  function renderWeather(data) {
+    const current = data.current;
+    const location = data.location;
+    const forecastDays = data.forecast?.forecastday ?? [];
+
+    const conditionText = current.condition.text;
+    const emoji = getWeatherEmoji(conditionText);
+
+    heroTemp.textContent = `${Math.round(current.temp_c)}°C`;
+    heroCity.textContent = `${location.name}, ${location.country}`;
+    heroIcon.textContent = emoji;
+
+    tempCard.textContent = `${Math.round(current.temp_c)}°C`;
+    conditionCard.textContent = conditionText;
+    feelsLikeCard.textContent = `${Math.round(current.feelslike_c)}°C`;
+    humidityCard.textContent = `${current.humidity}%`;
+    windCard.textContent = `${current.wind_kph} km/h`;
+    locationCard.textContent = `${location.name}, ${location.region}`;
+
+    renderForecast(forecastDays);
+  }
+
+  async function fetchWeather(city) {
+    status.textContent = "Buscando clima...";
+    form.classList.add("is-loading");
+
+    try {
+      const response = await fetch(`/api/weather?city=${encodeURIComponent(city)}`);
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "No se pudo obtener la información");
+      }
+
+      renderWeather(data);
+      status.textContent = `Mostrando resultados para ${data.location.name}.`;
+    } catch (error) {
+      status.textContent = error.message || "Ocurrió un error al buscar la ciudad.";
+    } finally {
+      form.classList.remove("is-loading");
+    }
+  }
+
+  form?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    const city = input instanceof HTMLInputElement ? input.value.trim() : "";
+
+    if (!city) {
+      status.textContent = "Ingresá una ciudad antes de buscar.";
+      return;
+    }
+
+    await fetchWeather(city);
+  });
+
+  fetchWeather("Buenos Aires");
+</script>
