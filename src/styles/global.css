@@ -164,8 +164,13 @@ a {
 }
 
 .button.primary {
-  background: var(--text);
-  color: white;
+  background: var(--primary);
+  color: #ffffff;
+  border: 1px solid transparent;
+}
+
+.button.primary:hover {
+  filter: brightness(1.05);
 }
 
 .button.secondary {
@@ -175,6 +180,20 @@ a {
 
 .button:hover {
   transform: translateY(-1px);
+}
+
+:root[data-theme="dark"] .button.primary {
+  background: #60a5fa;
+  color: #08111f;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+:root[data-theme="dark"] .button.primary:hover {
+  background: #93c5fd;
+}
+
+.search-form .button {
+  min-height: 50px;
 }
 
 .hero-card,
