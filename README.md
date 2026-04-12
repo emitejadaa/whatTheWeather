@@ -1,43 +1,193 @@
-# Astro Starter Kit: Minimal
+# 🌦️ SkyCast — Dashboard de Clima
 
-```sh
-npm create astro@latest -- --template minimal
-```
+## 🔗 Deploy
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+La aplicación se encuentra desplegada en:
 
-## 🚀 Project Structure
+👉 https://what-the-weather.vercel.app/
 
-Inside of your Astro project, you'll see the following folders and files:
+---
+
+## 📌 Datos del trabajo
+
+* **Autor:** Emiliano Tejada
+* **Curso:** 5A
+* **Temática:** Dashboard de clima
+
+---
+
+## 🧠 Descripción del proyecto
+
+SkyCast es una aplicación web desarrollada con Astro que permite consultar el clima actual y el pronóstico de una ciudad ingresada por el usuario.
+
+El flujo de funcionamiento es el siguiente:
+
+1. El usuario ingresa una ciudad.
+2. La app envía una solicitud a un endpoint interno (`/api/weather`) ubicado en "/src/pages/api/weather.ts".
+3. Este endpoint consulta una API externa de clima: https://www.weatherapi.com/.
+4. Se procesan los datos y se devuelven al frontend.
+5. La interfaz se actualiza dinámicamente.
+
+
+---
+
+## ⚙️ Herramientas y tecnologías utilizadas
+
+* **Astro** → framework principal
+* **JavaScript (vanilla)** → lógica y fetch a API
+* **HTML semántico**
+* **CSS moderno** → diseño, responsive y dark mode
+* **WeatherAPI** → fuente de datos del clima
+* **Vercel** → deploy de la aplicación
+
+---
+
+## Consignas cumplidas
+
+### Estructura de página con múltiples secciones
+
+* Secciones implementadas:
+
+  * Inicio (hero con búsqueda)
+  * Clima actual
+  * Detalles
+  * Pronóstico
+
+---
+
+### Uso de JavaScript
+
+* Implementado en:
+
+  * `Hero.astro`
+* Funcionalidades:
+
+  * búsqueda dinámica
+  * consumo de API
+  * actualización del DOM
+  * manejo de errores
+
+---
+
+### Consumo de API (fetch)
+
+* Endpoint interno:
+
+  * `src/pages/api/weather.ts`
+* La app utiliza fetch para consultar datos meteorológicos en tiempo real.
+
+---
+
+### Componentes reutilizables
+
+* Ubicación: `src/components/`
+* Componentes principales:
+
+  * `MetricCard`
+  * `DetailMeter`
+  * `Header`
+  * `Hero`
+  * `SectionTitle`
+
+---
+
+### Diseño responsive
+
+* Adaptación a dispositivos móviles mediante media queries.
+* Layout flexible con grids y flexbox.
+
+---
+
+### Tema claro y oscuro (extra)
+
+* Implementado con variables CSS.
+* Persistencia usando `localStorage`.
+
+📍 **Ubicación en la página:**
+
+* Botón en la **parte superior derecha (header)**.
+* Permite alternar entre modo claro y oscuro.
+
+---
+
+### Visualización tipo dashboard (extra)
+
+* Elementos visuales incluidos:
+
+  * barras de humedad y sensación térmica
+  * tarjetas de métricas
+  * resumen automático del clima
+  * pronóstico con datos adicionales
+
+---
+
+### Endpoint backend en Astro (extra)
+
+* Archivo: `src/pages/api/weather.ts`
+* Permite ocultar la API key y manejar errores del lado del servidor.
+
+---
+
+## Estructura del proyecto
 
 ```text
-/
-├── public/
-├── src/
-│   └── pages/
-│       └── index.astro
-└── package.json
+src/
+  components/
+  layouts/
+  pages/
+    api/
+  styles/
+public/
+.env.local
+astro.config.mjs
 ```
 
-Astro looks for `.astro` or `.md` files in the `src/pages/` directory. Each page is exposed as a route based on its file name.
+---
 
-There's nothing special about `src/components/`, but that's where we like to put any Astro/React/Vue/Svelte/Preact components.
+## 🚀 Cómo ejecutar el proyecto
 
-Any static assets, like images, can be placed in the `public/` directory.
+### 1. Clonar el repositorio
 
-## 🧞 Commands
+```bash
+git clone https://github.com/emitejadaa/whatTheWeather.git
+```
 
-All commands are run from the root of the project, from a terminal:
+### 2. Entrar en la carpeta
 
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
+```bash
+cd nombre-del-proyecto
+```
 
-## 👀 Want to learn more?
+### 3. Instalar dependencias
 
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+```bash
+npm install
+```
+
+### 4. Crear archivo de variables de entorno
+
+Crear un archivo `.env.local` en la raíz del proyecto:
+
+```env
+WEATHER_API_KEY=tu_api_key
+```
+
+> La API key se obtiene desde WeatherAPI.
+
+---
+
+### 5. Ejecutar en desarrollo
+
+```bash
+npm run dev
+```
+
+---
+
+### 6. Abrir en el navegador
+
+```
+http://localhost:4321
+```
+
+---
