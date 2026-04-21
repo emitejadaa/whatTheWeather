@@ -2,8 +2,10 @@
   <div class="container hero-content">
     <div class="hero-text">
       <p class="eyebrow">Weather dashboard</p>
-      <h1>Consultá el clima de cualquier ciudad</h1>
-
+      <h1>Consulta el clima y guarda tus ciudades favoritas</h1>
+      <p class="hero-description">
+        Busca cualquier ciudad, inicia sesion con Supabase y arma tu lista de accesos rapidos.
+      </p>
 
       <div class="search-form">
         <label for="city-input" class="sr-only">Ingresar ciudad</label>
@@ -16,28 +18,111 @@
         <button id="search-button" type="button" class="button primary">
           Buscar
         </button>
+        <button
+          id="favorite-button"
+          type="button"
+          class="button secondary"
+          disabled
+        >
+          Guardar favorita
+        </button>
       </div>
 
       <p id="form-status" class="form-status" aria-live="polite"></p>
+
+      <section class="auth-panel card" aria-labelledby="auth-title">
+        <div class="auth-panel-heading">
+          <div>
+            <p class="eyebrow">Usuarios</p>
+            <h2 id="auth-title">Registro y login</h2>
+          </div>
+
+          <div class="auth-tabs" role="tablist" aria-label="Modo de autenticacion">
+            <button
+              id="login-tab"
+              class="auth-tab is-active"
+              type="button"
+              data-mode="login"
+            >
+              Login
+            </button>
+            <button
+              id="register-tab"
+              class="auth-tab"
+              type="button"
+              data-mode="register"
+            >
+              Register
+            </button>
+          </div>
+        </div>
+
+        <form id="auth-form" class="auth-form">
+          <input
+            id="auth-email"
+            class="auth-input"
+            type="email"
+            placeholder="tu@email.com"
+            autocomplete="email"
+          />
+          <input
+            id="auth-password"
+            class="auth-input"
+            type="password"
+            placeholder="Minimo 6 caracteres"
+            autocomplete="current-password"
+          />
+          <button id="auth-submit" type="submit" class="button primary">
+            Iniciar sesion
+          </button>
+        </form>
+
+        <p id="auth-status" class="form-status" aria-live="polite"></p>
+      </section>
     </div>
 
-    <div class="hero-card">
-      <div class="weather-preview">
-        <span id="hero-icon" class="weather-icon">☀️</span>
-        <div>
-          <p class="preview-label">Clima actual</p>
-          <h2 id="hero-temp">--°C</h2>
-          <p id="hero-city" class="preview-city">Esperando búsqueda...</p>
-          <p id="hero-mini-details" class="hero-mini-details">
-            Humedad -- • Viento --
-          </p>
+    <div class="hero-sidebar">
+      <div class="hero-card">
+        <div class="weather-preview">
+          <span id="hero-icon" class="weather-icon">☀️</span>
+          <div>
+            <p class="preview-label">Clima actual</p>
+            <h2 id="hero-temp">--°C</h2>
+            <p id="hero-city" class="preview-city">Esperando busqueda...</p>
+            <p id="hero-mini-details" class="hero-mini-details">
+              Humedad -- • Viento --
+            </p>
+          </div>
         </div>
       </div>
+
+      <section id="favoritos" class="card favorites-card">
+        <div class="favorites-heading">
+          <div>
+            <p class="eyebrow">Favoritos</p>
+            <h2>Tus ciudades</h2>
+          </div>
+          <span id="favorites-count" class="favorites-count">0</span>
+        </div>
+
+        <p id="favorites-empty" class="favorites-empty">
+          Inicia sesion para guardar ciudades favoritas.
+        </p>
+
+        <div id="favorites-list" class="favorites-list"></div>
+      </section>
     </div>
   </div>
 </section>
 
 <script>
+  const authState = {
+    mode: "login",
+    user: null,
+    currentCity: "",
+    favorites: [],
+  };
+
   function getWeatherEmoji(text) {
     const value = text.toLowerCase();
 
@@ -49,6 +134,30 @@
     if (value.includes("mist") || value.includes("fog") || value.includes("niebla")) return "🌫️";
 
     return "🌤️";
+  }
+
+  function normalizeCity(value) {
+    return value.trim().replace(/\s+/g, " ");
+  }
+
+  function buildCityQuery(value) {
+    return normalizeCity(value).toLowerCase();
+  }
+
+  function setStatus(selector, message, variant) {
+    const element = document.querySelector(selector);
+    if (!element) return;
+
+    element.textContent = message;
+    element.classList.remove("status-error", "status-success");
+
+    if (variant === "error") {
+      element.classList.add("status-error");
+    }
+
+    if (variant === "success") {
+      element.classList.add("status-success");
+    }
   }
 
   function renderForecast(days) {
@@ -89,6 +198,75 @@
     });
   }
 
+  function updateFavoriteButton() {
+    const button = document.querySelector("#favorite-button");
+    if (!(button instanceof HTMLButtonElement)) return;
+
+    const cityName = authState.currentCity;
+    const isLoggedIn = Boolean(authState.user);
+    const isFavorite = authState.favorites.some(
+      (favorite) => favorite.city_query === buildCityQuery(cityName),
+    );
+
+    button.disabled = !cityName || !isLoggedIn;
+    button.textContent = isFavorite ? "Quitar favorita" : "Guardar favorita";
+  }
+
+  function renderFavorites() {
+    const favoritesList = document.querySelector("#favorites-list");
+    const emptyState = document.querySelector("#favorites-empty");
+    const count = document.querySelector("#favorites-count");
+
+    if (!favoritesList || !emptyState || !count) return;
+
+    favoritesList.innerHTML = "";
+    count.textContent = String(authState.favorites.length);
+
+    if (!authState.user) {
+      emptyState.textContent = "Inicia sesion para guardar ciudades favoritas.";
+      emptyState.classList.remove("hidden");
+      updateFavoriteButton();
+      return;
+    }
+
+    if (authState.favorites.length === 0) {
+      emptyState.textContent = "Todavia no tienes favoritas guardadas.";
+      emptyState.classList.remove("hidden");
+      updateFavoriteButton();
+      return;
+    }
+
+    emptyState.classList.add("hidden");
+
+    authState.favorites.forEach((favorite) => {
+      const item = document.createElement("div");
+      item.className = "favorite-item";
+
+      const name = document.createElement("button");
+      name.type = "button";
+      name.className = "favorite-city";
+      name.textContent = favorite.city_name;
+      name.addEventListener("click", () => {
+        const input = document.querySelector("#city-input");
+        if (input instanceof HTMLInputElement) {
+          input.value = favorite.city_name;
+        }
+        fetchWeather(favorite.city_name);
+      });
+
+      const remove = document.createElement("button");
+      remove.type = "button";
+      remove.className = "favorite-remove";
+      remove.textContent = "Quitar";
+      remove.addEventListener("click", () => removeFavorite(favorite.city_name));
+
+      item.append(name, remove);
+      favoritesList.appendChild(item);
+    });
+
+    updateFavoriteButton();
+  }
+
   function renderWeather(data) {
     const current = data.current;
     const location = data.location;
@@ -103,10 +281,12 @@
     const wind = Math.round(current.wind_kph);
     const pressure = Math.round(current.pressure_mb);
     const visibility = Number(current.vis_km);
+    const displayCity = `${location.name}, ${location.country}`;
 
-    // HERO
+    authState.currentCity = displayCity;
+
     document.querySelector("#hero-temp").textContent = `${roundedTemp}°C`;
-    document.querySelector("#hero-city").textContent = `${location.name}, ${location.country}`;
+    document.querySelector("#hero-city").textContent = displayCity;
     document.querySelector("#hero-icon").textContent = emoji;
 
     const heroMiniDetails = document.querySelector("#hero-mini-details");
@@ -114,19 +294,15 @@
       heroMiniDetails.textContent = `Humedad ${humidity}% • Viento ${wind} km/h`;
     }
 
-    // CARDS
     document.querySelector("#temp-value").textContent = `${roundedTemp}°C`;
     document.querySelector("#condition-value").textContent = conditionText;
     document.querySelector("#feelslike-value").textContent = `${roundedFeelsLike}°C`;
     document.querySelector("#humidity-value").textContent = `${humidity}%`;
     document.querySelector("#wind-value").textContent = `${wind} km/h`;
     document.querySelector("#location-value").textContent = `${location.name}, ${location.region}`;
-
     document.querySelector("#pressure-value").textContent = `${pressure} mb`;
     document.querySelector("#visibility-value").textContent = `${visibility} km`;
     document.querySelector("#localtime-value").textContent = location.localtime;
-
-    // METERS
     document.querySelector("#feelslike-meter-value").textContent = `${roundedFeelsLike}°C`;
 
     const humidityFill = document.querySelector("#humidity-fill");
@@ -136,13 +312,12 @@
     const feelsLikeFill = document.querySelector("#feelslike-fill");
     if (feelsLikeFill) feelsLikeFill.style.width = `${Math.min(Math.max(feelsLikePercent, 0), 100)}%`;
 
-    // SUMMARY
     document.querySelector("#summary-icon").textContent = emoji;
     document.querySelector("#summary-text").textContent =
       `En ${location.name} el clima es ${conditionText.toLowerCase()}, con ${roundedTemp}°C, humedad ${humidity}% y viento de ${wind} km/h.`;
 
-    // FORECAST
     renderForecast(forecastDays);
+    updateFavoriteButton();
   }
 
   async function fetchWeather(city) {
@@ -172,32 +347,243 @@
       }
 
       renderWeather(data);
-
-      if (status) {
-        status.textContent = `Mostrando resultados para ${data.location.name}`;
-        status.classList.add("status-success");
-      }
-
+      setStatus("#form-status", `Mostrando resultados para ${data.location.name}`, "success");
     } catch (error) {
       console.error(error);
-
-      if (status) {
-        status.textContent =
-          error instanceof Error ? error.message : "Error inesperado";
-        status.classList.add("status-error");
-      }
-
+      setStatus(
+        "#form-status",
+        error instanceof Error ? error.message : "Error inesperado",
+        "error",
+      );
     } finally {
       if (button) button.disabled = false;
+    }
+  }
+
+  async function loadSession() {
+    try {
+      const response = await fetch("/api/auth/session");
+      const data = await response.json();
+
+      authState.user = data.user ?? null;
+      window.dispatchEvent(
+        new CustomEvent("auth:changed", {
+          detail: { user: authState.user },
+        }),
+      );
+
+      syncAuthView();
+
+      if (authState.user) {
+        await loadFavorites();
+      } else {
+        authState.favorites = [];
+        renderFavorites();
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  async function loadFavorites() {
+    if (!authState.user) {
+      authState.favorites = [];
+      renderFavorites();
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/favorites");
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "No se pudieron cargar favoritos");
+      }
+
+      authState.favorites = data.favorites ?? [];
+      renderFavorites();
+    } catch (error) {
+      console.error(error);
+      setStatus(
+        "#auth-status",
+        error instanceof Error ? error.message : "Error al cargar favoritos",
+        "error",
+      );
+    }
+  }
+
+  async function saveFavorite() {
+    if (!authState.currentCity) return;
+
+    const button = document.querySelector("#favorite-button");
+    if (button instanceof HTMLButtonElement) {
+      button.disabled = true;
+    }
+
+    try {
+      const isFavorite = authState.favorites.some(
+        (favorite) => favorite.city_query === buildCityQuery(authState.currentCity),
+      );
+
+      const response = await fetch("/api/favorites", {
+        method: isFavorite ? "DELETE" : "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          city: authState.currentCity,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "No se pudo actualizar el favorito");
+      }
+
+      await loadFavorites();
+      setStatus("#form-status", data.message, "success");
+    } catch (error) {
+      console.error(error);
+      setStatus(
+        "#form-status",
+        error instanceof Error ? error.message : "Error al actualizar favorito",
+        "error",
+      );
+    } finally {
+      updateFavoriteButton();
+    }
+  }
+
+  async function removeFavorite(cityName) {
+    try {
+      const response = await fetch("/api/favorites", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          city: cityName,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "No se pudo eliminar el favorito");
+      }
+
+      await loadFavorites();
+      setStatus("#form-status", data.message, "success");
+    } catch (error) {
+      console.error(error);
+      setStatus(
+        "#form-status",
+        error instanceof Error ? error.message : "Error al quitar favorito",
+        "error",
+      );
+    }
+  }
+
+  function syncAuthView() {
+    const submit = document.querySelector("#auth-submit");
+    if (submit) {
+      submit.textContent =
+        authState.mode === "login" ? "Iniciar sesion" : "Crear cuenta";
+    }
+
+    const loginTab = document.querySelector("#login-tab");
+    const registerTab = document.querySelector("#register-tab");
+
+    if (loginTab) {
+      loginTab.classList.toggle("is-active", authState.mode === "login");
+    }
+
+    if (registerTab) {
+      registerTab.classList.toggle("is-active", authState.mode === "register");
+    }
+
+    const passwordInput = document.querySelector("#auth-password");
+    if (passwordInput instanceof HTMLInputElement) {
+      passwordInput.autocomplete =
+        authState.mode === "login" ? "current-password" : "new-password";
+    }
+  }
+
+  async function submitAuthForm(event) {
+    event.preventDefault();
+
+    const emailInput = document.querySelector("#auth-email");
+    const passwordInput = document.querySelector("#auth-password");
+    const submitButton = document.querySelector("#auth-submit");
+
+    if (!(emailInput instanceof HTMLInputElement)) return;
+    if (!(passwordInput instanceof HTMLInputElement)) return;
+
+    const email = emailInput.value.trim();
+    const password = passwordInput.value.trim();
+
+    if (!email || !password) {
+      setStatus("#auth-status", "Completa email y password", "error");
+      return;
+    }
+
+    if (submitButton instanceof HTMLButtonElement) {
+      submitButton.disabled = true;
+    }
+
+    try {
+      const endpoint =
+        authState.mode === "login" ? "/api/auth/login" : "/api/auth/register";
+
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email,
+          password,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "No se pudo completar la operacion");
+      }
+
+      setStatus("#auth-status", data.message, "success");
+
+      if (data.user) {
+        emailInput.value = "";
+        passwordInput.value = "";
+        await loadSession();
+      }
+    } catch (error) {
+      console.error(error);
+      setStatus(
+        "#auth-status",
+        error instanceof Error ? error.message : "Error inesperado",
+        "error",
+      );
+    } finally {
+      if (submitButton instanceof HTMLButtonElement) {
+        submitButton.disabled = false;
+      }
     }
   }
 
   function setupWeather() {
     const input = document.querySelector("#city-input");
     const button = document.querySelector("#search-button");
+    const favoriteButton = document.querySelector("#favorite-button");
+    const authForm = document.querySelector("#auth-form");
+    const tabs = document.querySelectorAll("[data-mode]");
 
     if (!(input instanceof HTMLInputElement)) return;
     if (!(button instanceof HTMLButtonElement)) return;
+    if (!(favoriteButton instanceof HTMLButtonElement)) return;
 
     button.addEventListener("click", () => {
       const city = input.value.trim();
@@ -205,16 +591,43 @@
       fetchWeather(city);
     });
 
-    input.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") {
-        e.preventDefault();
+    favoriteButton.addEventListener("click", () => {
+      saveFavorite();
+    });
+
+    input.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
         const city = input.value.trim();
         if (!city) return;
         fetchWeather(city);
       }
     });
 
-    // Carga inicial
+    tabs.forEach((tab) => {
+      tab.addEventListener("click", () => {
+        authState.mode = tab.dataset.mode === "register" ? "register" : "login";
+        syncAuthView();
+      });
+    });
+
+    if (authForm instanceof HTMLFormElement) {
+      authForm.addEventListener("submit", submitAuthForm);
+    }
+
+    window.addEventListener("auth:changed", async (event) => {
+      authState.user = event.detail?.user ?? null;
+      syncAuthView();
+
+      if (!authState.user) {
+        authState.favorites = [];
+        renderFavorites();
+        setStatus("#auth-status", "Sesion cerrada", "success");
+      }
+    });
+
+    syncAuthView();
+    loadSession();
     fetchWeather("Buenos Aires");
   }
 

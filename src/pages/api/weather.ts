@@ -2,9 +2,25 @@ import type { APIRoute } from "astro";
 
 export const prerender = false;
 
+function getSslErrorCode(error: unknown) {
+  if (
+    typeof error === "object" &&
+    error !== null &&
+    "cause" in error &&
+    typeof error.cause === "object" &&
+    error.cause !== null &&
+    "code" in error.cause &&
+    typeof error.cause.code === "string"
+  ) {
+    return error.cause.code;
+  }
+
+  return "";
+}
+
 export const POST: APIRoute = async ({ request }) => {
   try {
-    console.log("Método recibido:", request.method);
+    console.log("Metodo recibido:", request.method);
     console.log("Headers content-type:", request.headers.get("content-type"));
 
     const rawBody = await request.text();
@@ -16,7 +32,7 @@ export const POST: APIRoute = async ({ request }) => {
       body = rawBody ? JSON.parse(rawBody) : null;
     } catch {
       return new Response(
-        JSON.stringify({ error: "El body no es JSON válido" }),
+        JSON.stringify({ error: "El body no es JSON valido" }),
         {
           status: 400,
           headers: { "Content-Type": "application/json" },
@@ -67,7 +83,6 @@ export const POST: APIRoute = async ({ request }) => {
     apiUrl.searchParams.set("lang", "es");
 
     const apiResponse = await fetch(apiUrl);
-
     const apiText = await apiResponse.text();
 
     if (!apiResponse.ok) {
@@ -96,9 +111,27 @@ export const POST: APIRoute = async ({ request }) => {
   } catch (error) {
     console.error("Error en /api/weather:", error);
 
+    const sslErrorCode = getSslErrorCode(error);
+
+    if (
+      sslErrorCode === "SELF_SIGNED_CERT_IN_CHAIN" ||
+      sslErrorCode === "UNABLE_TO_VERIFY_LEAF_SIGNATURE"
+    ) {
+      return new Response(
+        JSON.stringify({
+          error:
+            "No se pudo conectar con WeatherAPI por un certificado HTTPS local o interceptado. Revisa proxy, antivirus, VPN o certificados corporativos en tu equipo.",
+        }),
+        {
+          status: 502,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
+
     return new Response(
       JSON.stringify({
-        error: "Ocurrió un error inesperado al consultar el clima",
+        error: "Ocurrio un error inesperado al consultar el clima",
       }),
       {
         status: 500,

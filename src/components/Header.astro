@@ -6,19 +6,34 @@
       <a href="#inicio">Inicio</a>
       <a href="#actual">Clima actual</a>
       <a href="#detalles">Detalles</a>
-      <a href="#pronostico">Pronóstico</a>
+      <a href="#pronostico">Pronostico</a>
+      <a href="#favoritos">Favoritos</a>
     </nav>
 
-    <button
-      id="theme-toggle"
-      class="theme-toggle"
-      type="button"
-      aria-label="Cambiar tema"
-      title="Cambiar tema"
-    >
-      <span id="theme-toggle-icon">🌙</span>
-      <span id="theme-toggle-text">Oscuro</span>
-    </button>
+    <div class="header-actions">
+      <p id="session-indicator" class="session-indicator">
+        Invitado
+      </p>
+
+      <button
+        id="logout-button"
+        class="button secondary auth-chip hidden"
+        type="button"
+      >
+        Cerrar sesion
+      </button>
+
+      <button
+        id="theme-toggle"
+        class="theme-toggle"
+        type="button"
+        aria-label="Cambiar tema"
+        title="Cambiar tema"
+      >
+        <span id="theme-toggle-icon">🌙</span>
+        <span id="theme-toggle-text">Oscuro</span>
+      </button>
+    </div>
   </div>
 </header>
 
@@ -35,6 +50,19 @@
 
     if (text) {
       text.textContent = theme === "dark" ? "Claro" : "Oscuro";
+    }
+  }
+
+  function updateHeaderSession(user) {
+    const sessionIndicator = document.querySelector("#session-indicator");
+    const logoutButton = document.querySelector("#logout-button");
+
+    if (sessionIndicator) {
+      sessionIndicator.textContent = user?.email ? user.email : "Invitado";
+    }
+
+    if (logoutButton instanceof HTMLButtonElement) {
+      logoutButton.classList.toggle("hidden", !user);
     }
   }
 
@@ -60,9 +88,43 @@
     });
   }
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", setupThemeToggle);
-  } else {
+  function setupLogout() {
+    const logoutButton = document.querySelector("#logout-button");
+    if (!(logoutButton instanceof HTMLButtonElement)) return;
+
+    logoutButton.addEventListener("click", async () => {
+      logoutButton.disabled = true;
+
+      try {
+        await fetch("/api/auth/logout", {
+          method: "POST",
+        });
+
+        window.dispatchEvent(
+          new CustomEvent("auth:changed", {
+            detail: { user: null },
+          }),
+        );
+      } catch (error) {
+        console.error(error);
+      } finally {
+        logoutButton.disabled = false;
+      }
+    });
+  }
+
+  function setupHeader() {
     setupThemeToggle();
+    setupLogout();
+
+    window.addEventListener("auth:changed", (event) => {
+      updateHeaderSession(event.detail?.user ?? null);
+    });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", setupHeader);
+  } else {
+    setupHeader();
   }
 </script>
