@@ -1,14 +1,14 @@
-# 🌦️ SkyCast — Dashboard de Clima
+# 🌦️ WhatTheWeather — Dashboard de clima
 
 ## 🔗 Deploy
 
-La aplicación se encuentra desplegada en:
+La aplicación está desplegada en:
 
 👉 https://what-the-weather.vercel.app/
 
 ---
 
-## 📌 Datos del trabajo
+## 📌 Datos del proyecto
 
 * **Autor:** Emiliano Tejada
 * **Curso:** 5A
@@ -18,63 +18,45 @@ La aplicación se encuentra desplegada en:
 
 ## 🧠 Descripción del proyecto
 
-SkyCast es una aplicación web desarrollada con Astro que permite consultar el clima actual y el pronóstico de una ciudad ingresada por el usuario.
+WhatTheWeather es una aplicación web desarrollada con Astro que permite consultar el clima actual y un pronóstico corto de cualquier ciudad.
 
-El flujo de funcionamiento es el siguiente:
+El flujo actual de la app es el siguiente:
 
-1. El usuario ingresa una ciudad.
-2. La app envía una solicitud a un endpoint interno (`/api/weather`) ubicado en "/src/pages/api/weather.ts".
-3. Este endpoint consulta una API externa de clima: https://www.weatherapi.com/.
-4. Se procesan los datos y se devuelven al frontend.
-5. La interfaz se actualiza dinámicamente.
-
+1. El usuario escribe una ciudad en el buscador principal.
+2. El frontend hace una solicitud `POST` al endpoint interno `/api/weather`.
+3. Ese endpoint consulta WeatherAPI desde el servidor.
+4. La respuesta vuelve al cliente con los datos ya procesados.
+5. La interfaz actualiza el hero, las métricas, el resumen y el pronóstico.
 
 ---
 
 ## ⚙️ Herramientas y tecnologías utilizadas
 
 * **Astro** → framework principal
-* **JavaScript (vanilla)** → lógica y fetch a API
+* **JavaScript (vanilla)** → lógica del frontend e interacción con la API interna
 * **HTML semántico**
-* **CSS moderno** → diseño, responsive y dark mode
-* **WeatherAPI** → fuente de datos del clima
-* **Vercel** → deploy de la aplicación
+* **CSS moderno** → layout responsive, dashboard visual y tema claro/oscuro
+* **WeatherAPI** → fuente de datos meteorológicos
+* **Vercel** → despliegue serverless
 
 ---
 
-## Consignas cumplidas
+## Funcionalidades implementadas
 
-### Estructura de página con múltiples secciones
+### Búsqueda de clima en tiempo real
 
-* Secciones implementadas:
-
-  * Inicio (hero con búsqueda)
-  * Clima actual
-  * Detalles
-  * Pronóstico
+* Campo de búsqueda con botón y soporte para tecla `Enter`
+* Consulta de ciudad a través de `fetch`
+* Manejo de errores y mensajes de estado en pantalla
 
 ---
 
-### Uso de JavaScript
+### Dashboard con múltiples secciones
 
-* Implementado en:
-
-  * `Hero.astro`
-* Funcionalidades:
-
-  * búsqueda dinámica
-  * consumo de API
-  * actualización del DOM
-  * manejo de errores
-
----
-
-### Consumo de API (fetch)
-
-* Endpoint interno:
-
-  * `src/pages/api/weather.ts`
-* La app utiliza fetch para consultar datos meteorológicos en tiempo real.
+* **Inicio** con buscador y preview rápida
+* **Clima actual** con métricas principales
+* **Detalles** con indicadores complementarios
+* **Pronóstico corto** con vista de próximos días
 
 ---
 
@@ -82,49 +64,28 @@ El flujo de funcionamiento es el siguiente:
 
 * Ubicación: `src/components/`
 * Componentes principales:
-
-  * `MetricCard`
-  * `DetailMeter`
   * `Header`
   * `Hero`
+  * `MetricCard`
+  * `DetailMeter`
   * `SectionTitle`
 
 ---
 
-### Diseño responsive
+### Tema claro y oscuro
 
-* Adaptación a dispositivos móviles mediante media queries.
-* Layout flexible con grids y flexbox.
-
----
-
-### Tema claro y oscuro (extra)
-
-* Implementado con variables CSS.
-* Persistencia usando `localStorage`.
-
-📍 **Ubicación en la página:**
-
-* Botón en la **parte superior derecha (header)**.
-* Permite alternar entre modo claro y oscuro.
+* Toggle en el header
+* Persistencia mediante `localStorage`
+* Aplicación del tema desde el layout para evitar saltos visuales al cargar
 
 ---
 
-### Visualización tipo dashboard (extra)
-
-* Elementos visuales incluidos:
-
-  * barras de humedad y sensación térmica
-  * tarjetas de métricas
-  * resumen automático del clima
-  * pronóstico con datos adicionales
-
----
-
-### Endpoint backend en Astro (extra)
+### Endpoint backend en Astro
 
 * Archivo: `src/pages/api/weather.ts`
-* Permite ocultar la API key y manejar errores del lado del servidor.
+* Oculta la API key del proveedor externo
+* Valida el body recibido
+* Reenvía errores de WeatherAPI con mensajes más claros
 
 ---
 
@@ -136,10 +97,15 @@ src/
   layouts/
   pages/
     api/
+      weather.ts
+    index.astro
   styles/
 public/
+  skycast-icon.svg
+.env
 .env.local
 astro.config.mjs
+package.json
 ```
 
 ---
@@ -155,7 +121,7 @@ git clone https://github.com/emitejadaa/whatTheWeather.git
 ### 2. Entrar en la carpeta
 
 ```bash
-cd nombre-del-proyecto
+cd whatTheWeather
 ```
 
 ### 3. Instalar dependencias
@@ -164,15 +130,15 @@ cd nombre-del-proyecto
 npm install
 ```
 
-### 4. Crear archivo de variables de entorno
+### 4. Configurar variables de entorno
 
-Crear un archivo `.env.local` en la raíz del proyecto:
+Crear `.env.local` en la raíz con:
 
 ```env
 WEATHER_API_KEY=tu_api_key
 ```
 
-> La API key se obtiene desde WeatherAPI.
+La key se obtiene desde https://www.weatherapi.com/.
 
 ---
 
@@ -186,8 +152,20 @@ npm run dev
 
 ### 6. Abrir en el navegador
 
-```
+```text
 http://localhost:4321
 ```
 
 ---
+
+## ☁️ Deploy en Vercel
+
+El proyecto usa el adapter oficial `@astrojs/vercel` con salida `server`, por lo que el endpoint `/api/weather` se despliega como función serverless.
+
+Para que el deploy funcione correctamente:
+
+* configurar `WEATHER_API_KEY` en las Environment Variables de Vercel
+* mantener compatibles `astro` y `@astrojs/vercel`
+* usar una versión de Node soportada por Vercel
+
+En el estado actual del proyecto se fija `Node 24.x` en `package.json` para evitar resoluciones ambiguas durante el build.
