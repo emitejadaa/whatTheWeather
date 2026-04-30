@@ -160,6 +160,14 @@
     }
   }
 
+  function dispatchAuthChange(user) {
+    window.dispatchEvent(
+      new CustomEvent("auth:changed", {
+        detail: { user },
+      }),
+    );
+  }
+
   function renderForecast(days) {
     const forecastContainer = document.querySelector("#forecast-list");
     if (!forecastContainer) return;
@@ -366,11 +374,7 @@
       const data = await response.json();
 
       authState.user = data.user ?? null;
-      window.dispatchEvent(
-        new CustomEvent("auth:changed", {
-          detail: { user: authState.user },
-        }),
-      );
+      dispatchAuthChange(authState.user);
 
       syncAuthView();
 
@@ -555,10 +559,28 @@
 
       setStatus("#auth-status", data.message, "success");
 
-      if (data.user) {
+      if (authState.mode === "register" && data.needsEmailConfirmation) {
+        authState.user = null;
+        dispatchAuthChange(null);
+        authState.favorites = [];
+        renderFavorites();
+        syncAuthView();
+        setStatus("#auth-status", data.message, "success");
+
         emailInput.value = "";
         passwordInput.value = "";
-        await loadSession();
+        return;
+      }
+
+      if (data.user) {
+        authState.user = data.user;
+        dispatchAuthChange(authState.user);
+        syncAuthView();
+
+        emailInput.value = "";
+        passwordInput.value = "";
+
+        await loadFavorites();
       }
     } catch (error) {
       console.error(error);

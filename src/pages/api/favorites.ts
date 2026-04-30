@@ -24,6 +24,7 @@ export const GET: APIRoute = async (context) => {
     const { data, error } = await supabase
       .from("favorite_cities")
       .select("id, city_name, city_query, created_at")
+      .eq("user_id", auth.user.id)
       .order("created_at", { ascending: false });
 
     if (error) {
