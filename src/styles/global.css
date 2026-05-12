@@ -498,6 +498,75 @@ a {
   display: none !important;
 }
 
+/* Dashboard Styles */
+.dashboard-card {
+  padding: 1.5rem;
+}
+
+.dashboard-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.dashboard-card h2 {
+  margin: 0.2rem 0 0;
+  font-size: 1.35rem;
+}
+
+.dashboard-empty {
+  margin: 1rem 0 0;
+  color: var(--muted);
+}
+
+.dashboard-tabs {
+  display: inline-flex;
+  padding: 0.3rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface-strong) 90%, transparent);
+  margin-top: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.dashboard-tab {
+  min-height: 38px;
+  padding: 0 0.95rem;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  border-radius: 999px;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.dashboard-tab.is-active {
+  background: var(--primary);
+  color: #ffffff;
+}
+
+.dashboard-section {
+  display: none;
+}
+
+.dashboard-section.is-active {
+  display: block;
+}
+
+.favorites-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.favorites-empty-message {
+  margin: 1rem 0 0;
+  color: var(--muted);
+}
+
 .search-form.is-loading button {
   opacity: 0.7;
   pointer-events: none;

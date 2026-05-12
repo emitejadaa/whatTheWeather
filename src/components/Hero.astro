@@ -1,3 +1,7 @@
+---
+import TripsPanel from "./TripsPanel.astro";
+---
+
 <section id="inicio" class="hero">
   <div class="container hero-content">
     <div class="hero-text">
@@ -96,20 +100,56 @@
         </div>
       </div>
 
-      <section id="favoritos" class="card favorites-card">
-        <div class="favorites-heading">
+      <section id="dashboard" class="card dashboard-card">
+        <div class="dashboard-heading">
           <div>
-            <p class="eyebrow">Favoritos</p>
-            <h2>Tus ciudades</h2>
+            <p class="eyebrow">Mi cuenta</p>
+            <h2>Dashboard</h2>
           </div>
-          <span id="favorites-count" class="favorites-count">0</span>
         </div>
 
-        <p id="favorites-empty" class="favorites-empty">
-          Inicia sesion para guardar ciudades favoritas.
+        <!-- User not authenticated -->
+        <p id="dashboard-empty" class="dashboard-empty">
+          Iniciá sesión para guardar viajes y consultar el clima de tus próximas vacaciones.
         </p>
 
-        <div id="favorites-list" class="favorites-list"></div>
+        <!-- Dashboard tabs -->
+        <div id="dashboard-tabs" class="dashboard-tabs" style="display: none;">
+          <button
+            id="favorites-tab"
+            class="dashboard-tab is-active"
+            type="button"
+            data-tab="favorites"
+          >
+            Favoritos
+          </button>
+          <button
+            id="trips-tab"
+            class="dashboard-tab"
+            type="button"
+            data-tab="trips"
+          >
+            Mis viajes
+          </button>
+        </div>
+
+        <!-- Favorites section -->
+        <div id="favorites-section" class="dashboard-section is-active">
+          <div class="favorites-heading">
+            <span id="favorites-count" class="favorites-count">0</span>
+          </div>
+
+          <p id="favorites-empty-message" class="favorites-empty">
+            Todavía no tienes favoritas guardadas.
+          </p>
+
+          <div id="favorites-list" class="favorites-list"></div>
+        </div>
+
+        <!-- Trips section -->
+        <div id="trips-section" class="dashboard-section">
+          <TripsPanel />
+        </div>
       </section>
     </div>
   </div>
@@ -222,8 +262,10 @@
 
   function renderFavorites() {
     const favoritesList = document.querySelector("#favorites-list");
-    const emptyState = document.querySelector("#favorites-empty");
+    const emptyState = document.querySelector("#favorites-empty-message");
     const count = document.querySelector("#favorites-count");
+    const dashboardEmpty = document.querySelector("#dashboard-empty");
+    const dashboardTabs = document.querySelector("#dashboard-tabs");
 
     if (!favoritesList || !emptyState || !count) return;
 
@@ -233,12 +275,17 @@
     if (!authState.user) {
       emptyState.textContent = "Inicia sesion para guardar ciudades favoritas.";
       emptyState.classList.remove("hidden");
+      dashboardEmpty.style.display = "block";
+      if (dashboardTabs) dashboardTabs.style.display = "none";
       updateFavoriteButton();
       return;
     }
 
+    dashboardEmpty.style.display = "none";
+    if (dashboardTabs) dashboardTabs.style.display = "flex";
+
     if (authState.favorites.length === 0) {
-      emptyState.textContent = "Todavia no tienes favoritas guardadas.";
+      emptyState.textContent = "Todavía no tienes favoritas guardadas.";
       emptyState.classList.remove("hidden");
       updateFavoriteButton();
       return;
@@ -596,6 +643,28 @@
     }
   }
 
+  function setupDashboardTabs() {
+    const tabs = document.querySelectorAll(".dashboard-tab");
+    const sections = document.querySelectorAll(".dashboard-section");
+
+    tabs.forEach((tab) => {
+      tab.addEventListener("click", () => {
+        const targetTab = tab.dataset.tab;
+
+        // Update active tab
+        tabs.forEach((t) => t.classList.remove("is-active"));
+        tab.classList.add("is-active");
+
+        // Update active section
+        sections.forEach((section) => section.classList.remove("is-active"));
+        const targetSection = document.getElementById(`${targetTab}-section`);
+        if (targetSection) {
+          targetSection.classList.add("is-active");
+        }
+      });
+    });
+  }
+
   function setupWeather() {
     const input = document.querySelector("#city-input");
     const button = document.querySelector("#search-button");
@@ -649,6 +718,7 @@
     });
 
     syncAuthView();
+    setupDashboardTabs();
     loadSession();
     fetchWeather("Buenos Aires");
   }
