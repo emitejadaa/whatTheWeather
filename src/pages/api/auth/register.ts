@@ -30,6 +30,9 @@ export const POST: APIRoute = async (context) => {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
+      options: {
+        emailRedirectTo: undefined,
+      },
     });
 
     if (error) {
@@ -38,6 +41,16 @@ export const POST: APIRoute = async (context) => {
 
     if (data.session) {
       setAuthCookies(context, data.session);
+    } else if (data.user && !data.session) {
+      // Si no hay sesión, intentamos hacer login automático
+      const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (loginData.session) {
+        setAuthCookies(context, loginData.session);
+      }
     }
 
     return Response.json({
@@ -47,10 +60,7 @@ export const POST: APIRoute = async (context) => {
             email: data.user.email ?? email,
           }
         : null,
-      needsEmailConfirmation: !data.session,
-      message: data.session
-        ? "Usuario registrado correctamente"
-        : "Registro creado. Revisa tu email para confirmar la cuenta.",
+      message: "Usuario registrado correctamente",
     });
   } catch (error) {
     console.error("Error en /api/auth/register:", error);
