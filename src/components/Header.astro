@@ -16,11 +16,19 @@
       </p>
 
       <button
+        id="auth-open-button"
+        class="button primary auth-chip"
+        type="button"
+      >
+        Acceder
+      </button>
+
+      <button
         id="logout-button"
         class="button secondary auth-chip hidden"
         type="button"
       >
-        Cerrar sesion
+        Cerrar sesión
       </button>
 
       <button
@@ -30,7 +38,7 @@
         aria-label="Cambiar tema"
         title="Cambiar tema"
       >
-        <span id="theme-toggle-icon">🌙</span>
+        <span id="theme-toggle-icon">◑</span>
         <span id="theme-toggle-text">Oscuro</span>
       </button>
     </div>
@@ -45,7 +53,7 @@
     const text = document.querySelector("#theme-toggle-text");
 
     if (icon) {
-      icon.textContent = theme === "dark" ? "☀️" : "🌙";
+      icon.textContent = theme === "dark" ? "◐" : "◑";
     }
 
     if (text) {
@@ -56,6 +64,7 @@
   function updateHeaderSession(user) {
     const sessionIndicator = document.querySelector("#session-indicator");
     const logoutButton = document.querySelector("#logout-button");
+    const loginButton = document.querySelector("#auth-open-button");
 
     if (sessionIndicator) {
       sessionIndicator.textContent = user?.email ? user.email : "Invitado";
@@ -63,6 +72,10 @@
 
     if (logoutButton instanceof HTMLButtonElement) {
       logoutButton.classList.toggle("hidden", !user);
+    }
+
+    if (loginButton instanceof HTMLButtonElement) {
+      loginButton.classList.toggle("hidden", Boolean(user));
     }
   }
 
@@ -113,9 +126,23 @@
     });
   }
 
+  function setupAuthOpen() {
+    const openButton = document.querySelector("#auth-open-button");
+    if (!(openButton instanceof HTMLButtonElement)) return;
+
+    openButton.addEventListener("click", () => {
+      const modal = document.querySelector("#auth-modal");
+      if (modal instanceof HTMLElement) {
+        modal.classList.remove("hidden");
+        modal.setAttribute("aria-hidden", "false");
+      }
+    });
+  }
+
   function setupHeader() {
     setupThemeToggle();
     setupLogout();
+    setupAuthOpen();
 
     window.addEventListener("auth:changed", (event) => {
       updateHeaderSession(event.detail?.user ?? null);

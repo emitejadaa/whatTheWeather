@@ -1,34 +1,38 @@
 :root {
-  --bg: #f5f7fb;
-  --bg-gradient-top: rgba(59, 130, 246, 0.08);
-  --bg-gradient-bottom: #eef2f7;
-  --surface: rgba(255, 255, 255, 0.72);
+  color-scheme: light;
+  --bg: #eef3fb;
+  --bg-gradient-top: rgba(107, 130, 255, 0.18);
+  --bg-gradient-bottom: #f7f9fd;
+  --surface: rgba(255, 255, 255, 0.92);
   --surface-strong: #ffffff;
   --text: #101828;
-  --muted: #667085;
+  --muted: #566174;
   --border: rgba(16, 24, 40, 0.08);
-  --shadow: 0 10px 30px rgba(16, 24, 40, 0.08);
-  --primary: #2563eb;
-  --primary-soft: rgba(37, 99, 235, 0.12);
-  --meter-bg: rgba(16, 24, 40, 0.08);
-  --radius: 24px;
+  --shadow: 0 24px 80px rgba(15, 23, 42, 0.12);
+  --accent: #6b82ff;
+  --accent-soft: rgba(107, 130, 255, 0.14);
+  --success: #16a34a;
+  --danger: #dc2626;
+  --radius: 26px;
   --radius-sm: 18px;
-  --container: 1120px;
+  --container: 1180px;
 }
 
 :root[data-theme="dark"] {
-  --bg: #0b1220;
-  --bg-gradient-top: rgba(37, 99, 235, 0.18);
-  --bg-gradient-bottom: #0f172a;
-  --surface: rgba(15, 23, 42, 0.72);
-  --surface-strong: #111827;
-  --text: #e5eefc;
+  color-scheme: dark;
+  --bg: #080b16;
+  --bg-gradient-top: rgba(96, 165, 250, 0.16);
+  --bg-gradient-bottom: #0e172a;
+  --surface: rgba(12, 18, 36, 0.88);
+  --surface-strong: #0f172a;
+  --text: #e6eef9;
   --muted: #94a3b8;
   --border: rgba(148, 163, 184, 0.16);
-  --shadow: 0 16px 40px rgba(0, 0, 0, 0.28);
-  --primary: #60a5fa;
-  --primary-soft: rgba(96, 165, 250, 0.16);
-  --meter-bg: rgba(148, 163, 184, 0.16);
+  --shadow: 0 30px 90px rgba(0, 0, 0, 0.35);
+  --accent: #60a5fa;
+  --accent-soft: rgba(96, 165, 250, 0.18);
+  --success: #34d399;
+  --danger: #fb7185;
 }
 
 * {
@@ -41,11 +45,14 @@ html {
 
 body {
   margin: 0;
+  min-height: 100vh;
   font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  background:
-    radial-gradient(circle at top left, var(--bg-gradient-top), transparent 30%),
-    linear-gradient(180deg, var(--bg) 0%, var(--bg-gradient-bottom) 100%);
   color: var(--text);
+  background: linear-gradient(180deg, var(--bg) 0%, var(--bg-gradient-bottom) 100%);
+  background-image:
+    radial-gradient(circle at top left, var(--bg-gradient-top), transparent 24%),
+    radial-gradient(circle at bottom right, var(--accent-soft), transparent 22%),
+    linear-gradient(180deg, var(--bg) 0%, var(--bg-gradient-bottom) 100%);
   transition: background 0.25s ease, color 0.25s ease;
 }
 
@@ -816,6 +823,86 @@ a {
 .card,
 .hero-card {
   animation: fadeUp 0.45s ease;
+}
+
+.auth-modal {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background: rgba(4, 9, 26, 0.72);
+  backdrop-filter: blur(14px);
+  z-index: 50;
+}
+
+.auth-dialog {
+  width: min(100%, 540px);
+  padding: 2rem;
+  display: grid;
+  gap: 1.25rem;
+  border-radius: 30px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(21, 30, 55, 0.94);
+}
+
+.auth-dialog-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.modal-close {
+  border: none;
+  background: rgba(255, 255, 255, 0.06);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  color: var(--text);
+  font-size: 1.15rem;
+  cursor: pointer;
+}
+
+.auth-tab {
+  flex: 1;
+  text-align: center;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--muted);
+  padding: 0.95rem 1rem;
+  border-radius: 999px;
+  font-weight: 700;
+}
+
+.auth-tab.is-active {
+  background: linear-gradient(135deg, var(--accent), #5f7dff);
+  color: #fff;
+  border-color: transparent;
+}
+
+.auth-input {
+  width: 100%;
+  min-height: 52px;
+  padding: 0 1rem;
+  border-radius: 18px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.96);
+  color: var(--text);
+}
+
+.auth-actions {
+  display: grid;
+  gap: 1rem;
+}
+
+@media (max-width: 640px) {
+  .auth-dialog,
+  .hero-card,
+  .card {
+    border-radius: 24px;
+  }
 }
 
 @keyframes fadeUp {

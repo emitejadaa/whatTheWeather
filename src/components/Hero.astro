@@ -8,7 +8,7 @@ import TripsPanel from "./TripsPanel.astro";
       <p class="eyebrow">Weather dashboard</p>
       <h1>Consulta el clima y guarda tus ciudades favoritas</h1>
       <p class="hero-description">
-        Busca cualquier ciudad, inicia sesion con Supabase y arma tu lista de accesos rapidos.
+        Consulta el clima en cualquier ciudad y guarda tus lugares preferidos con una interfaz limpia y clara.
       </p>
 
       <div class="search-form">
@@ -34,21 +34,44 @@ import TripsPanel from "./TripsPanel.astro";
 
       <p id="form-status" class="form-status" aria-live="polite"></p>
 
-      <section class="auth-panel card" aria-labelledby="auth-title">
-        <div class="auth-panel-heading">
-          <div>
-            <p class="eyebrow">Usuarios</p>
-            <h2 id="auth-title">Registro y login</h2>
+      <div class="hero-actions">
+        <button id="auth-open-button-hero" type="button" class="button secondary">
+          Acceder
+        </button>
+      </div>
+
+      <div
+        id="auth-modal"
+        class="auth-modal hidden"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="auth-title"
+        aria-hidden="true"
+      >
+        <div class="auth-dialog card">
+          <div class="auth-dialog-header">
+            <div>
+              <p class="eyebrow">Bienvenido</p>
+              <h2 id="auth-title">Iniciar sesión</h2>
+            </div>
+            <button
+              id="modal-close-button"
+              type="button"
+              class="modal-close"
+              aria-label="Cerrar ventana"
+            >
+              ×
+            </button>
           </div>
 
-          <div class="auth-tabs" role="tablist" aria-label="Modo de autenticacion">
+          <div class="auth-tabs" role="tablist" aria-label="Modo de autenticación">
             <button
               id="login-tab"
               class="auth-tab is-active"
               type="button"
               data-mode="login"
             >
-              Login
+              Acceder
             </button>
             <button
               id="register-tab"
@@ -56,33 +79,41 @@ import TripsPanel from "./TripsPanel.astro";
               type="button"
               data-mode="register"
             >
-              Register
+              Crear cuenta
             </button>
           </div>
+
+          <form id="auth-form" class="auth-form">
+            <label class="sr-only" for="auth-email">Email</label>
+            <input
+              id="auth-email"
+              class="auth-input"
+              type="email"
+              placeholder="tucorreo@dominio.com"
+              autocomplete="email"
+            />
+            <label class="sr-only" for="auth-password">Contraseña</label>
+            <input
+              id="auth-password"
+              class="auth-input"
+              type="password"
+              placeholder="Mínimo 6 caracteres"
+              autocomplete="current-password"
+            />
+            <button id="auth-submit" type="submit" class="button primary">
+              Acceder
+            </button>
+          </form>
+
+          <div class="auth-actions">
+            <button id="google-login-button" type="button" class="button outline">
+              Iniciar con Google
+            </button>
+          </div>
+
+          <p id="auth-status" class="form-status" aria-live="polite"></p>
         </div>
-
-        <form id="auth-form" class="auth-form">
-          <input
-            id="auth-email"
-            class="auth-input"
-            type="email"
-            placeholder="tu@email.com"
-            autocomplete="email"
-          />
-          <input
-            id="auth-password"
-            class="auth-input"
-            type="password"
-            placeholder="Minimo 6 caracteres"
-            autocomplete="current-password"
-          />
-          <button id="auth-submit" type="submit" class="button primary">
-            Iniciar sesion
-          </button>
-        </form>
-
-        <p id="auth-status" class="form-status" aria-live="polite"></p>
-      </section>
+      </div>
     </div>
 
     <div class="hero-sidebar">
@@ -155,7 +186,9 @@ import TripsPanel from "./TripsPanel.astro";
   </div>
 </section>
 
-<script>
+<script type="module">
+  import { createClient } from "@supabase/supabase-js";
+
   const authState = {
     mode: "login",
     user: null,
@@ -163,17 +196,26 @@ import TripsPanel from "./TripsPanel.astro";
     favorites: [],
   };
 
-  function getWeatherEmoji(text) {
+  const SUPABASE_URL = import.meta.env.PUBLIC_SUPABASE_URL;
+  const SUPABASE_KEY = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
+  const supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY, {
+    auth: {
+      persistSession: false,
+      detectSessionInUrl: true,
+    },
+  });
+
+  function getWeatherSymbol(text) {
     const value = text.toLowerCase();
 
-    if (value.includes("sun") || value.includes("soleado") || value.includes("despejado")) return "☀️";
-    if (value.includes("cloud") || value.includes("nublado")) return "☁️";
-    if (value.includes("rain") || value.includes("lluv")) return "🌧️";
-    if (value.includes("storm") || value.includes("torment")) return "⛈️";
-    if (value.includes("snow") || value.includes("nieve")) return "❄️";
-    if (value.includes("mist") || value.includes("fog") || value.includes("niebla")) return "🌫️";
+    if (value.includes("sun") || value.includes("soleado") || value.includes("despejado")) return "Soleado";
+    if (value.includes("cloud") || value.includes("nublado")) return "Nublado";
+    if (value.includes("rain") || value.includes("lluv")) return "Lluvia";
+    if (value.includes("storm") || value.includes("torment")) return "Tormenta";
+    if (value.includes("snow") || value.includes("nieve")) return "Nieve";
+    if (value.includes("mist") || value.includes("fog") || value.includes("niebla")) return "Niebla";
 
-    return "🌤️";
+    return "Clima";
   }
 
   function normalizeCity(value) {
@@ -208,6 +250,80 @@ import TripsPanel from "./TripsPanel.astro";
     );
   }
 
+  function openAuthModal() {
+    const modal = document.querySelector("#auth-modal");
+    if (modal instanceof HTMLElement) {
+      modal.classList.remove("hidden");
+      modal.setAttribute("aria-hidden", "false");
+    }
+  }
+
+  function closeAuthModal() {
+    const modal = document.querySelector("#auth-modal");
+    if (modal instanceof HTMLElement) {
+      modal.classList.add("hidden");
+      modal.setAttribute("aria-hidden", "true");
+    }
+  }
+
+  async function handleGoogleLogin() {
+    if (!SUPABASE_URL || !SUPABASE_KEY) {
+      setStatus("#auth-status", "Configuración de Google incompleta", "error");
+      return;
+    }
+
+    try {
+      setStatus("#auth-status", "Redirigiendo a Google…", "success");
+      const { data, error } = await supabaseClient.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: window.location.origin,
+        },
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      if (data?.url) {
+        window.location.href = data.url;
+      }
+    } catch (error) {
+      console.error(error);
+      setStatus(
+        "#auth-status",
+        error instanceof Error ? error.message : "Error al iniciar con Google",
+        "error",
+      );
+    }
+  }
+
+  async function restoreOAuthSession() {
+    try {
+      const { data, error } = await supabaseClient.auth.getSessionFromUrl();
+      if (error || !data?.session) return;
+
+      const response = await fetch("/api/auth/restore", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ session: data.session }),
+      });
+
+      const payload = await response.json();
+      if (response.ok && payload.user) {
+        authState.user = payload.user;
+        dispatchAuthChange(authState.user);
+        await loadFavorites();
+        closeAuthModal();
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
   function renderForecast(days) {
     const forecastContainer = document.querySelector("#forecast-list");
     if (!forecastContainer) return;
@@ -229,7 +345,7 @@ import TripsPanel from "./TripsPanel.astro";
       const maxTemp = Math.round(day.day.maxtemp_c);
       const minTemp = Math.round(day.day.mintemp_c);
       const chanceOfRain = day.day.daily_chance_of_rain;
-      const icon = getWeatherEmoji(day.day.condition.text);
+      const icon = getWeatherSymbol(day.day.condition.text);
 
       item.innerHTML = `
         <p class="forecast-day">${formattedDate}</p>
@@ -328,7 +444,7 @@ import TripsPanel from "./TripsPanel.astro";
     const forecastDays = data.forecast?.forecastday ?? [];
 
     const conditionText = current.condition.text;
-    const emoji = getWeatherEmoji(conditionText);
+    const emoji = getWeatherSymbol(conditionText);
 
     const roundedTemp = Math.round(current.temp_c);
     const roundedFeelsLike = Math.round(current.feelslike_c);
@@ -706,6 +822,37 @@ import TripsPanel from "./TripsPanel.astro";
       authForm.addEventListener("submit", submitAuthForm);
     }
 
+    const authOpenButtons = document.querySelectorAll("#auth-open-button, #auth-open-button-hero");
+    const googleButton = document.querySelector("#google-login-button");
+    const modalClose = document.querySelector("#modal-close-button");
+    const authModal = document.querySelector("#auth-modal");
+
+    authOpenButtons.forEach((button) => {
+      button.addEventListener("click", openAuthModal);
+    });
+
+    if (googleButton instanceof HTMLButtonElement) {
+      googleButton.addEventListener("click", handleGoogleLogin);
+    }
+
+    if (modalClose instanceof HTMLButtonElement) {
+      modalClose.addEventListener("click", closeAuthModal);
+    }
+
+    if (authModal instanceof HTMLElement) {
+      authModal.addEventListener("click", (event) => {
+        if (event.target === authModal) {
+          closeAuthModal();
+        }
+      });
+    }
+
+    window.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        closeAuthModal();
+      }
+    });
+
     window.addEventListener("auth:changed", async (event) => {
       authState.user = event.detail?.user ?? null;
       syncAuthView();
@@ -719,6 +866,7 @@ import TripsPanel from "./TripsPanel.astro";
 
     syncAuthView();
     setupDashboardTabs();
+    await restoreOAuthSession();
     loadSession();
     fetchWeather("Buenos Aires");
   }
