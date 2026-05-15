@@ -170,16 +170,7 @@ a {
 
 .auth-chip {
   min-height: 40px;
-}
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  color: var(--muted);
-  font-size: 0.92rem;
-  max-width: 240px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  border-radius: 8px;
 }
 
 .hero {
