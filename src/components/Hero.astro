@@ -227,8 +227,10 @@ import TripsPanel from "./TripsPanel.astro";
   const supabaseClient = hasSupabaseBrowserConfig
     ? createClient(SUPABASE_URL, SUPABASE_KEY, {
         auth: {
-          persistSession: false,
-          detectSessionInUrl: true,
+          persistSession: true,
+          autoRefreshToken: false,
+          detectSessionInUrl: false,
+          flowType: "pkce",
         },
       })
     : null;
@@ -236,14 +238,15 @@ import TripsPanel from "./TripsPanel.astro";
   function getWeatherSymbol(text) {
     const value = text.toLowerCase();
 
-    if (value.includes("sun") || value.includes("soleado") || value.includes("despejado")) return "Soleado";
-    if (value.includes("cloud") || value.includes("nublado")) return "Nublado";
-    if (value.includes("rain") || value.includes("lluv")) return "Lluvia";
-    if (value.includes("storm") || value.includes("torment")) return "Tormenta";
-    if (value.includes("snow") || value.includes("nieve")) return "Nieve";
-    if (value.includes("mist") || value.includes("fog") || value.includes("niebla")) return "Niebla";
+    if (value.includes("thunder") || value.includes("storm") || value.includes("torment")) return "⛈️";
+    if (value.includes("snow") || value.includes("sleet") || value.includes("blizzard") || value.includes("nieve")) return "❄️";
+    if (value.includes("rain") || value.includes("drizzle") || value.includes("shower") || value.includes("lluv")) return "🌧️";
+    if (value.includes("mist") || value.includes("fog") || value.includes("haze") || value.includes("niebla") || value.includes("neblina")) return "🌫️";
+    if (value.includes("overcast") || value.includes("nublado")) return "☁️";
+    if (value.includes("cloud") || value.includes("partly") || value.includes("parcial")) return "⛅";
+    if (value.includes("clear") || value.includes("sun") || value.includes("soleado") || value.includes("despejado")) return "☀️";
 
-    return "Clima";
+    return "🌤️";
   }
 
   function normalizeCity(value) {
@@ -322,7 +325,7 @@ import TripsPanel from "./TripsPanel.astro";
       const { data, error } = await supabaseClient.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: window.location.origin,
+          redirectTo: `${window.location.origin}${window.location.pathname}`,
           queryParams: {
             prompt: "select_account",
           },
@@ -351,15 +354,27 @@ import TripsPanel from "./TripsPanel.astro";
       if (!supabaseClient) return;
 
       const url = new URL(window.location.href);
+      const providerError =
+        url.searchParams.get("error_description") ||
+        url.searchParams.get("error");
+
+      if (providerError) {
+        openAuthModal(authState.mode);
+        setStatus("#auth-status", providerError, "error");
+        window.history.replaceState({}, document.title, window.location.pathname);
+        return;
+      }
+
       const hasOAuthCallback =
         url.searchParams.has("code") || url.hash.includes("access_token");
 
       if (!hasOAuthCallback) return;
 
       if (url.searchParams.has("code")) {
-        const { error } = await supabaseClient.auth.exchangeCodeForSession(
-          url.searchParams.get("code"),
-        );
+        const code = url.searchParams.get("code");
+        if (!code) return;
+
+        const { error } = await supabaseClient.auth.exchangeCodeForSession(code);
         if (error) throw error;
       } else {
         const { error } = await supabaseClient.auth.initialize();

@@ -340,9 +340,7 @@ a {
   min-height: 72px;
   border-radius: 12px;
   background: var(--accent-soft);
-  color: var(--accent);
-  font-size: 0.9rem;
-  text-transform: uppercase;
+  font-size: 2.3rem;
   font-weight: 700;
 }
 
@@ -833,8 +831,7 @@ a {
   min-height: 44px;
   border-radius: 8px;
   background: var(--accent-soft);
-  color: var(--accent);
-  font-size: 1.4rem;
+  font-size: 1.6rem;
   flex-shrink: 0;
 }
 
