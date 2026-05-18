@@ -361,6 +361,19 @@
     forecastDays: WeatherDay[];
   }
 
+  let isTripsUserAuthenticated = false;
+
+  function renderTripsLoggedOut() {
+    const tripsList = document.getElementById("trips-list");
+    if (!tripsList) return;
+
+    tripsList.innerHTML = `
+      <div class="empty-state">
+        <p>Inicia sesion para guardar y consultar tus viajes.</p>
+      </div>
+    `;
+  }
+
   function setStatus(
     elementId: string,
     message: string,
@@ -498,11 +511,17 @@
   }
 
   async function loadTrips() {
+    if (!isTripsUserAuthenticated) {
+      renderTripsLoggedOut();
+      return;
+    }
+
     try {
       const response = await fetch("/api/trips");
 
       if (response.status === 401) {
-        // Not authenticated
+        isTripsUserAuthenticated = false;
+        renderTripsLoggedOut();
         return;
       }
 
@@ -577,6 +596,15 @@
 
   async function handleFormSubmit(e: Event) {
     e.preventDefault();
+
+    if (!isTripsUserAuthenticated) {
+      setStatus(
+        "trips-form-status",
+        "Inicia sesion para guardar viajes",
+        "error"
+      );
+      return;
+    }
 
     const nameInput = document.getElementById(
       "trip-name"
@@ -663,12 +691,38 @@
     }
   }
 
-  // Initialize
+  async function initializeTripsPanel() {
+    try {
+      const response = await fetch("/api/auth/session");
+      const data = await response.json();
+
+      isTripsUserAuthenticated = Boolean(data.user);
+
+      if (isTripsUserAuthenticated) {
+        loadTrips();
+      } else {
+        renderTripsLoggedOut();
+      }
+    } catch (error) {
+      console.error("Error checking trip session:", error);
+      renderTripsLoggedOut();
+    }
+  }
+
+  window.addEventListener("auth:changed", (event) => {
+    isTripsUserAuthenticated = Boolean(event.detail?.user);
+
+    if (isTripsUserAuthenticated) {
+      loadTrips();
+    } else {
+      renderTripsLoggedOut();
+    }
+  });
+
   const form = document.getElementById("trips-form");
   if (form) {
     form.addEventListener("submit", handleFormSubmit);
   }
 
-  // Load trips on component mount
-  loadTrips();
+  initializeTripsPanel();
 </script>

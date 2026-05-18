@@ -35,8 +35,21 @@ import TripsPanel from "./TripsPanel.astro";
       <p id="form-status" class="form-status" aria-live="polite"></p>
 
       <div class="hero-actions">
-        <button id="auth-open-button-hero" type="button" class="button secondary">
+        <button
+          id="auth-open-button-hero"
+          type="button"
+          class="button secondary"
+          data-auth-start-mode="login"
+        >
           Acceder
+        </button>
+        <button
+          id="auth-register-button-hero"
+          type="button"
+          class="button outline"
+          data-auth-start-mode="register"
+        >
+          Crear cuenta
         </button>
       </div>
 
@@ -70,18 +83,24 @@ import TripsPanel from "./TripsPanel.astro";
               class="auth-tab is-active"
               type="button"
               data-mode="login"
+              aria-selected="true"
             >
-              Acceder
+              Iniciar sesión
             </button>
             <button
               id="register-tab"
               class="auth-tab"
               type="button"
               data-mode="register"
+              aria-selected="false"
             >
-              Crear cuenta
+              Registrarse
             </button>
           </div>
+
+          <p id="auth-helper" class="auth-helper">
+            Entra con tu email o continua con Google.
+          </p>
 
           <form id="auth-form" class="auth-form">
             <label class="sr-only" for="auth-email">Email</label>
@@ -105,9 +124,15 @@ import TripsPanel from "./TripsPanel.astro";
             </button>
           </form>
 
+          <div class="auth-divider" aria-hidden="true">
+            <span></span>
+            <strong>o</strong>
+            <span></span>
+          </div>
+
           <div class="auth-actions">
             <button id="google-login-button" type="button" class="button outline">
-              Iniciar con Google
+              Continuar con Google
             </button>
           </div>
 
@@ -186,7 +211,7 @@ import TripsPanel from "./TripsPanel.astro";
   </div>
 </section>
 
-<script type="module">
+<script>
   import { createClient } from "@supabase/supabase-js";
 
   const authState = {
@@ -225,14 +250,15 @@ import TripsPanel from "./TripsPanel.astro";
   function getWeatherSymbol(text) {
     const value = text.toLowerCase();
 
-    if (value.includes("sun") || value.includes("soleado") || value.includes("despejado")) return "Soleado";
-    if (value.includes("cloud") || value.includes("nublado")) return "Nublado";
-    if (value.includes("rain") || value.includes("lluv")) return "Lluvia";
-    if (value.includes("storm") || value.includes("torment")) return "Tormenta";
-    if (value.includes("snow") || value.includes("nieve")) return "Nieve";
-    if (value.includes("mist") || value.includes("fog") || value.includes("niebla")) return "Niebla";
+    if (value.includes("thunder") || value.includes("storm") || value.includes("torment")) return "⛈️";
+    if (value.includes("snow") || value.includes("sleet") || value.includes("blizzard") || value.includes("nieve")) return "❄️";
+    if (value.includes("rain") || value.includes("drizzle") || value.includes("shower") || value.includes("lluv")) return "🌧️";
+    if (value.includes("mist") || value.includes("fog") || value.includes("haze") || value.includes("niebla") || value.includes("neblina")) return "🌫️";
+    if (value.includes("overcast") || value.includes("nublado")) return "☁️";
+    if (value.includes("cloud") || value.includes("partly") || value.includes("parcial")) return "⛅";
+    if (value.includes("clear") || value.includes("sun") || value.includes("soleado") || value.includes("despejado")) return "☀️";
 
-    return "Clima";
+    return "🌤️";
   }
 
   function normalizeCity(value) {
@@ -267,11 +293,26 @@ import TripsPanel from "./TripsPanel.astro";
     );
   }
 
-  function openAuthModal() {
+  function setAuthMode(mode) {
+    authState.mode = mode === "register" ? "register" : "login";
+    syncAuthView();
+    setStatus("#auth-status", "", undefined);
+  }
+
+  function openAuthModal(mode = authState.mode) {
+    setAuthMode(mode);
+
     const modal = document.querySelector("#auth-modal");
     if (modal instanceof HTMLElement) {
       modal.classList.remove("hidden");
+      modal.classList.add("is-open");
       modal.setAttribute("aria-hidden", "false");
+      document.body.classList.add("auth-modal-open");
+
+      const emailInput = document.querySelector("#auth-email");
+      if (emailInput instanceof HTMLInputElement) {
+        window.setTimeout(() => emailInput.focus(), 0);
+      }
     }
   }
 
@@ -279,7 +320,9 @@ import TripsPanel from "./TripsPanel.astro";
     const modal = document.querySelector("#auth-modal");
     if (modal instanceof HTMLElement) {
       modal.classList.add("hidden");
+      modal.classList.remove("is-open");
       modal.setAttribute("aria-hidden", "true");
+      document.body.classList.remove("auth-modal-open");
     }
   }
 
@@ -291,6 +334,10 @@ import TripsPanel from "./TripsPanel.astro";
       const { data, error } = await client.auth.signInWithOAuth({
         provider: "google",
         options: {
+          redirectTo: `${window.location.origin}${window.location.pathname}`,
+          queryParams: {
+            prompt: "select_account",
+          },
           redirectTo: `${window.location.origin}${window.location.pathname}`,
           queryParams: {
             prompt: "select_account",
@@ -706,27 +753,48 @@ import TripsPanel from "./TripsPanel.astro";
   }
 
   function syncAuthView() {
+    const authTitle = document.querySelector("#auth-title");
     const submit = document.querySelector("#auth-submit");
-    if (submit) {
-      submit.textContent =
-        authState.mode === "login" ? "Iniciar sesion" : "Crear cuenta";
-    }
-
     const loginTab = document.querySelector("#login-tab");
     const registerTab = document.querySelector("#register-tab");
+    const helper = document.querySelector("#auth-helper");
+    const googleButton = document.querySelector("#google-login-button");
+
+    const isLogin = authState.mode === "login";
+
+    if (authTitle) {
+      authTitle.textContent = isLogin ? "Iniciar sesión" : "Crear cuenta";
+    }
+
+    if (submit) {
+      submit.textContent = isLogin ? "Iniciar sesión" : "Registrarse";
+    }
+
+    if (helper) {
+      helper.textContent = isLogin
+        ? "Entra con tu email o continua con Google."
+        : "Crea una cuenta con email o registrate con Google.";
+    }
+
+    if (googleButton) {
+      googleButton.textContent = isLogin
+        ? "Continuar con Google"
+        : "Registrarse con Google";
+    }
 
     if (loginTab) {
-      loginTab.classList.toggle("is-active", authState.mode === "login");
+      loginTab.classList.toggle("is-active", isLogin);
+      loginTab.setAttribute("aria-selected", String(isLogin));
     }
 
     if (registerTab) {
-      registerTab.classList.toggle("is-active", authState.mode === "register");
+      registerTab.classList.toggle("is-active", !isLogin);
+      registerTab.setAttribute("aria-selected", String(!isLogin));
     }
 
     const passwordInput = document.querySelector("#auth-password");
     if (passwordInput instanceof HTMLInputElement) {
-      passwordInput.autocomplete =
-        authState.mode === "login" ? "current-password" : "new-password";
+      passwordInput.autocomplete = isLogin ? "current-password" : "new-password";
     }
   }
 
@@ -797,6 +865,7 @@ import TripsPanel from "./TripsPanel.astro";
         passwordInput.value = "";
 
         await loadFavorites();
+        closeAuthModal();
       }
     } catch (error) {
       console.error(error);
@@ -834,7 +903,7 @@ import TripsPanel from "./TripsPanel.astro";
     });
   }
 
-  function setupWeather() {
+  async function setupWeather() {
     const input = document.querySelector("#city-input");
     const button = document.querySelector("#search-button");
     const favoriteButton = document.querySelector("#favorite-button");
@@ -866,8 +935,7 @@ import TripsPanel from "./TripsPanel.astro";
 
     tabs.forEach((tab) => {
       tab.addEventListener("click", () => {
-        authState.mode = tab.dataset.mode === "register" ? "register" : "login";
-        syncAuthView();
+        setAuthMode(tab.dataset.mode);
       });
     });
 
@@ -875,13 +943,17 @@ import TripsPanel from "./TripsPanel.astro";
       authForm.addEventListener("submit", submitAuthForm);
     }
 
-    const authOpenButtons = document.querySelectorAll("#auth-open-button, #auth-open-button-hero");
+    const authOpenButtons = document.querySelectorAll(
+      "#auth-open-button, #auth-open-button-hero, #auth-register-button-hero",
+    );
     const googleButton = document.querySelector("#google-login-button");
     const modalClose = document.querySelector("#modal-close-button");
     const authModal = document.querySelector("#auth-modal");
 
     authOpenButtons.forEach((button) => {
-      button.addEventListener("click", openAuthModal);
+      button.addEventListener("click", () => {
+        openAuthModal(button.dataset.authStartMode);
+      });
     });
 
     if (googleButton instanceof HTMLButtonElement) {
