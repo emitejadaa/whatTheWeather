@@ -196,14 +196,31 @@ import TripsPanel from "./TripsPanel.astro";
     favorites: [],
   };
 
-  const SUPABASE_URL = import.meta.env.PUBLIC_SUPABASE_URL;
-  const SUPABASE_KEY = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
-  const supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY, {
-    auth: {
-      persistSession: false,
-      detectSessionInUrl: true,
-    },
-  });
+  let supabaseClient = null;
+
+  async function getSupabaseClient() {
+    if (supabaseClient) {
+      return supabaseClient;
+    }
+
+    const response = await fetch("/api/auth/config");
+    const config = await response.json();
+
+    if (!response.ok || !config.url || !config.anonKey) {
+      throw new Error(config.error || "Configuracion de Supabase incompleta");
+    }
+
+    supabaseClient = createClient(config.url, config.anonKey, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: false,
+        detectSessionInUrl: false,
+        flowType: "pkce",
+      },
+    });
+
+    return supabaseClient;
+  }
 
   function getWeatherSymbol(text) {
     const value = text.toLowerCase();
@@ -267,17 +284,17 @@ import TripsPanel from "./TripsPanel.astro";
   }
 
   async function handleGoogleLogin() {
-    if (!SUPABASE_URL || !SUPABASE_KEY) {
-      setStatus("#auth-status", "Configuración de Google incompleta", "error");
-      return;
-    }
-
     try {
       setStatus("#auth-status", "Redirigiendo a Google…", "success");
-      const { data, error } = await supabaseClient.auth.signInWithOAuth({
+      const client = await getSupabaseClient();
+
+      const { data, error } = await client.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: window.location.origin,
+          redirectTo: `${window.location.origin}${window.location.pathname}`,
+          queryParams: {
+            prompt: "select_account",
+          },
         },
       });
 
@@ -300,7 +317,43 @@ import TripsPanel from "./TripsPanel.astro";
 
   async function restoreOAuthSession() {
     try {
-      const { data, error } = await supabaseClient.auth.getSessionFromUrl();
+      const callbackUrl = new URL(window.location.href);
+      const authError =
+        callbackUrl.searchParams.get("error_description") ||
+        callbackUrl.searchParams.get("error");
+
+      if (authError) {
+        openAuthModal();
+        setStatus("#auth-status", authError, "error");
+        window.history.replaceState({}, document.title, window.location.pathname);
+        return;
+      }
+
+      const hasPkceCode = callbackUrl.searchParams.has("code");
+      const hasImplicitToken = callbackUrl.hash.includes("access_token");
+
+      if (!hasPkceCode && !hasImplicitToken) {
+        return;
+      }
+
+      const client = await getSupabaseClient();
+
+      if (hasPkceCode) {
+        const code = callbackUrl.searchParams.get("code");
+        if (!code) return;
+
+        const { error } = await client.auth.exchangeCodeForSession(code);
+        if (error) {
+          throw error;
+        }
+      } else {
+        const { error } = await client.auth.initialize();
+        if (error) {
+          throw error;
+        }
+      }
+
+      const { data, error } = await client.auth.getSession();
       if (error || !data?.session) return;
 
       const response = await fetch("/api/auth/restore", {
