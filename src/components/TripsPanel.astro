@@ -1,58 +1,110 @@
 ---
-// TripsPanel.astro - Component for managing user trips/vacations
+// Panel for managing saved trips.
 ---
 
 <div id="trips-panel" class="trips-panel">
-  <!-- Form to create new trip -->
-  <div class="trips-form-container">
-    <h3>Crear un nuevo viaje</h3>
-    <form id="trips-form">
+  <div class="trips-toolbar">
+    <div>
+      <p class="trips-kicker">Viajes</p>
+      <h3>Mis viajes guardados</h3>
+    </div>
+    <span id="trips-count" class="trips-count">0</span>
+  </div>
+
+  <div class="trips-tabs" role="tablist" aria-label="Secciones de viajes">
+    <button
+      id="trips-list-tab"
+      class="trips-tab is-active"
+      type="button"
+      data-trips-view="list"
+      aria-selected="true"
+    >
+      Lista
+    </button>
+    <button
+      id="trips-new-tab"
+      class="trips-tab"
+      type="button"
+      data-trips-view="new"
+      aria-selected="false"
+    >
+      Nuevo
+    </button>
+  </div>
+
+  <section id="trips-list-view" class="trips-view is-active" aria-labelledby="trips-list-tab">
+    <div id="trips-list" class="trips-list">
+      <div class="empty-state">
+        <p>Todavia no guardaste viajes.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="trips-new-view" class="trips-view" aria-labelledby="trips-new-tab">
+    <form id="trips-form" class="trips-form">
       <div class="form-group">
-        <label for="trip-name">Nombre del viaje:</label>
+        <label for="trip-name">Nombre del viaje</label>
         <input
           id="trip-name"
           type="text"
-          placeholder="ej: Vacaciones en Bariloche"
+          placeholder="Ej: Vacaciones en Bariloche"
           maxlength="100"
         />
       </div>
 
       <div class="form-group">
-        <label for="trip-destination">Destino:</label>
+        <label for="trip-destination">Destino</label>
         <input
           id="trip-destination"
           type="text"
-          placeholder="ej: Bariloche, Argentina"
+          placeholder="Ej: Bariloche, Argentina"
           maxlength="150"
         />
       </div>
 
-      <div class="form-group">
-        <label for="trip-start-date">Fecha de inicio:</label>
-        <input id="trip-start-date" type="date" />
+      <div class="trips-date-grid">
+        <div class="form-group">
+          <label for="trip-start-date">Inicio</label>
+          <input id="trip-start-date" type="date" />
+        </div>
+
+        <div class="form-group">
+          <label for="trip-end-date">Fin</label>
+          <input id="trip-end-date" type="date" />
+        </div>
       </div>
 
-      <div class="form-group">
-        <label for="trip-end-date">Fecha de fin:</label>
-        <input id="trip-end-date" type="date" />
-      </div>
-
-      <button type="submit" class="btn btn-primary">Guardar viaje</button>
+      <button type="submit" class="button primary trips-submit">Guardar viaje</button>
     </form>
-    <div id="trips-form-status" class="status-message"></div>
-  </div>
+  </section>
 
-  <!-- List of trips -->
-  <div class="trips-list-container">
-    <h3>Mis viajes</h3>
-    <div id="trips-list" class="trips-list">
-      <!-- Trips will be loaded here -->
-      <div class="empty-state">
-        <p>
-          Todavía no guardaste viajes. Creá uno para ver el clima de tus
-          próximas vacaciones.
-        </p>
+  <p id="trips-form-status" class="trips-status" aria-live="polite"></p>
+
+  <div
+    id="trip-detail-modal"
+    class="trip-detail-modal hidden"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="trip-detail-title"
+    aria-hidden="true"
+  >
+    <div class="trip-detail-dialog">
+      <div class="trip-detail-header">
+        <div>
+          <p id="trip-detail-destination" class="trips-kicker"></p>
+          <h3 id="trip-detail-title">Detalle del viaje</h3>
+        </div>
+        <button
+          id="trip-detail-close"
+          class="trip-detail-close"
+          type="button"
+          aria-label="Cerrar detalle"
+        >
+          x
+        </button>
       </div>
+
+      <div id="trip-detail-body" class="trip-detail-body"></div>
     </div>
   </div>
 </div>
@@ -60,273 +112,367 @@
 <style>
   .trips-panel {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 2rem;
-    width: 100%;
-  }
-
-  @media (max-width: 768px) {
-    .trips-panel {
-      grid-template-columns: 1fr;
-    }
-  }
-
-  .trips-form-container,
-  .trips-list-container {
-    background: rgba(255, 255, 255, 0.08);
-    backdrop-filter: blur(8px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 16px;
-    padding: 2rem;
-  }
-
-  h3 {
-    margin: 0 0 1.5rem 0;
-    font-size: 1.3rem;
-    color: #fff;
-    font-weight: 600;
-  }
-
-  .form-group {
-    margin-bottom: 1.2rem;
-  }
-
-  label {
-    display: block;
-    margin-bottom: 0.5rem;
-    font-size: 0.9rem;
-    color: #e0e0e0;
-    font-weight: 500;
-  }
-
-  input[type="text"],
-  input[type="date"] {
-    width: 100%;
-    padding: 0.75rem;
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 8px;
-    color: #fff;
-    font-size: 1rem;
-    transition: all 0.3s ease;
-  }
-
-  input[type="text"]:focus,
-  input[type="date"]:focus {
-    outline: none;
-    background: rgba(255, 255, 255, 0.15);
-    border-color: rgba(100, 200, 255, 0.5);
-    box-shadow: 0 0 0 3px rgba(100, 200, 255, 0.1);
-  }
-
-  input[type="date"] {
-    color-scheme: dark;
-  }
-
-  .btn {
-    padding: 0.75rem 1.5rem;
-    border: none;
-    border-radius: 8px;
-    font-size: 1rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    width: 100%;
-  }
-
-  .btn-primary {
-    background: linear-gradient(135deg, #64c8ff 0%, #4a9fe8 100%);
-    color: #fff;
-  }
-
-  .btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(100, 200, 255, 0.3);
-  }
-
-  .btn-primary:active {
-    transform: translateY(0);
-  }
-
-  .status-message {
-    margin-top: 1rem;
-    padding: 0.75rem;
-    border-radius: 8px;
-    font-size: 0.9rem;
-    display: none;
-  }
-
-  .status-message.success {
-    display: block;
-    background: rgba(76, 175, 80, 0.2);
-    border: 1px solid rgba(76, 175, 80, 0.5);
-    color: #81c784;
-  }
-
-  .status-message.error {
-    display: block;
-    background: rgba(244, 67, 54, 0.2);
-    border: 1px solid rgba(244, 67, 54, 0.5);
-    color: #ef5350;
-  }
-
-  .trips-list {
-    display: flex;
-    flex-direction: column;
     gap: 1rem;
   }
 
-  .empty-state {
-    text-align: center;
-    padding: 2rem;
-    color: #999;
+  .trips-toolbar,
+  .trip-detail-header,
+  .trip-card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
   }
 
-  .empty-state p {
+  .trips-toolbar h3,
+  .trip-detail-header h3 {
+    margin: 0.15rem 0 0;
+    color: var(--text);
+    font-size: 1.2rem;
+    line-height: 1.25;
+  }
+
+  .trips-kicker {
     margin: 0;
-    font-size: 0.95rem;
+    color: var(--accent);
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+  }
+
+  .trips-count {
+    min-width: 42px;
+    min-height: 42px;
+    display: inline-grid;
+    place-items: center;
+    border-radius: 8px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-weight: 800;
+  }
+
+  .trips-tabs {
+    display: inline-flex;
+    width: fit-content;
+    padding: 0.35rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface);
+    gap: 0.25rem;
+  }
+
+  .trips-tab {
+    min-height: 36px;
+    padding: 0 0.9rem;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text-secondary);
+    font: inherit;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .trips-tab:hover {
+    color: var(--text);
+    background: var(--surface-soft);
+  }
+
+  .trips-tab.is-active {
+    color: #ffffff;
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+
+  .trips-view {
+    display: none;
+  }
+
+  .trips-view.is-active {
+    display: block;
+  }
+
+  .trips-list {
+    display: grid;
+    gap: 0.75rem;
   }
 
   .trip-card {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 12px;
-    padding: 1.5rem;
-    transition: all 0.3s ease;
+    display: grid;
+    gap: 0.9rem;
+    padding: 1rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface-soft);
   }
 
-  .trip-card:hover {
-    background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(100, 200, 255, 0.3);
-  }
-
-  .trip-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: start;
-    margin-bottom: 1rem;
-  }
-
-  .trip-title {
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: #fff;
+  .trip-card h4 {
     margin: 0;
+    color: var(--text);
+    font-size: 1rem;
+    line-height: 1.3;
+  }
+
+  .trip-destination,
+  .trip-dates,
+  .trip-meta {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    line-height: 1.5;
   }
 
   .trip-destination {
-    font-size: 0.9rem;
-    color: #64c8ff;
-    margin: 0.25rem 0 0 0;
-  }
-
-  .trip-dates {
-    font-size: 0.85rem;
-    color: #bbb;
-    margin-top: 0.5rem;
+    color: var(--accent);
+    font-weight: 700;
   }
 
   .trip-days {
-    display: inline-block;
-    background: rgba(100, 200, 255, 0.2);
-    color: #64c8ff;
-    padding: 0.25rem 0.75rem;
+    display: inline-flex;
+    align-items: center;
+    min-height: 28px;
+    padding: 0 0.6rem;
     border-radius: 6px;
-    font-size: 0.8rem;
-    margin-left: 0.5rem;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-size: 0.82rem;
+    font-weight: 800;
+    white-space: nowrap;
   }
 
   .trip-actions {
     display: flex;
     gap: 0.5rem;
+    flex-wrap: wrap;
   }
 
-  .btn-delete {
-    padding: 0.5rem 1rem;
-    background: rgba(244, 67, 54, 0.2);
-    color: #ef5350;
-    border: 1px solid rgba(244, 67, 54, 0.5);
-    border-radius: 6px;
-    font-size: 0.85rem;
+  .trip-action {
+    min-height: 36px;
+    padding: 0 0.8rem;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    font: inherit;
+    font-size: 0.86rem;
+    font-weight: 700;
     cursor: pointer;
-    transition: all 0.3s ease;
   }
 
-  .btn-delete:hover {
-    background: rgba(244, 67, 54, 0.3);
-    border-color: rgba(244, 67, 54, 0.7);
+  .trip-action:hover {
+    border-color: var(--accent);
+    color: var(--accent);
   }
 
-  .trip-weather {
-    margin-top: 1.2rem;
-    padding-top: 1rem;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+  .trip-action.danger {
+    color: var(--danger);
   }
 
-  .weather-title {
+  .trip-action.danger:hover {
+    border-color: var(--danger);
+    background: rgba(239, 68, 68, 0.08);
+  }
+
+  .trips-form {
+    display: grid;
+    gap: 1rem;
+  }
+
+  .trips-date-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+  }
+
+  .form-group {
+    display: grid;
+    gap: 0.45rem;
+  }
+
+  .form-group label {
+    color: var(--text);
     font-size: 0.9rem;
-    font-weight: 600;
-    color: #e0e0e0;
-    margin: 0 0 0.75rem 0;
+    font-weight: 700;
   }
 
-  .weather-loading {
-    font-size: 0.85rem;
-    color: #999;
-    font-style: italic;
+  .form-group input {
+    width: 100%;
+    min-height: 42px;
+    padding: 0 0.85rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface);
+    color: var(--text);
+    font: inherit;
+    font-size: 0.92rem;
   }
 
-  .weather-unavailable {
-    font-size: 0.85rem;
-    color: #999;
-    padding: 0.75rem;
-    background: rgba(255, 193, 7, 0.1);
-    border-radius: 6px;
-    border-left: 3px solid rgba(255, 193, 7, 0.5);
+  .form-group input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+  }
+
+  .trips-submit {
+    width: 100%;
+  }
+
+  .trips-status {
+    min-height: 22px;
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.9rem;
+  }
+
+  .trips-status.success {
+    color: var(--success);
+  }
+
+  .trips-status.error {
+    color: var(--danger);
+  }
+
+  .empty-state {
+    padding: 1rem;
+    border: 1px dashed var(--border);
+    border-radius: 8px;
+    color: var(--muted);
+    background: var(--surface-soft);
+  }
+
+  .empty-state p {
+    margin: 0;
+    line-height: 1.6;
+  }
+
+  .trip-detail-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    background: rgba(15, 23, 42, 0.64);
+    backdrop-filter: blur(8px);
+  }
+
+  .trip-detail-dialog {
+    width: min(100%, 720px);
+    max-height: min(86vh, 760px);
+    overflow: auto;
+    display: grid;
+    gap: 1rem;
+    padding: 1.25rem;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--surface);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .trip-detail-close {
+    width: 40px;
+    height: 40px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface-soft);
+    color: var(--text);
+    font: inherit;
+    font-weight: 800;
+    cursor: pointer;
+  }
+
+  .trip-detail-body {
+    display: grid;
+    gap: 1rem;
+  }
+
+  .trip-detail-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+  }
+
+  .trip-detail-stat,
+  .weather-day {
+    padding: 0.85rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface-soft);
+  }
+
+  .trip-detail-stat span,
+  .weather-date {
+    display: block;
+    color: var(--muted);
+    font-size: 0.78rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .trip-detail-stat strong {
+    display: block;
+    margin-top: 0.3rem;
+    color: var(--text);
+    font-size: 0.95rem;
+    line-height: 1.4;
+  }
+
+  .weather-panel {
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .weather-panel h4 {
+    margin: 0;
+    color: var(--text);
   }
 
   .weather-days {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
     gap: 0.75rem;
   }
 
-  @media (max-width: 600px) {
-    .weather-days {
-      grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-    }
-  }
-
-  .weather-day {
-    background: rgba(100, 200, 255, 0.1);
-    border: 1px solid rgba(100, 200, 255, 0.2);
-    border-radius: 8px;
-    padding: 0.75rem;
-    text-align: center;
-    font-size: 0.8rem;
-  }
-
-  .weather-date {
-    font-weight: 600;
-    color: #64c8ff;
-    margin-bottom: 0.5rem;
+  .weather-icon {
+    width: 36px;
+    height: 36px;
+    margin: 0.5rem 0;
   }
 
   .weather-temp {
-    color: #fff;
-    font-weight: 500;
+    color: var(--text);
+    font-weight: 800;
   }
 
-  .weather-condition {
-    color: #bbb;
-    margin-top: 0.25rem;
-    font-size: 0.75rem;
+  .weather-condition,
+  .weather-unavailable,
+  .weather-loading {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    line-height: 1.5;
   }
 
-  .weather-icon {
-    width: 30px;
-    height: 30px;
-    margin: 0 auto 0.25rem;
+  @media (max-width: 700px) {
+    .trips-toolbar,
+    .trip-card-header,
+    .trip-detail-header {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .trips-tabs,
+    .trips-tab {
+      width: 100%;
+    }
+
+    .trips-date-grid,
+    .trip-detail-grid {
+      grid-template-columns: 1fr;
+    }
   }
 </style>
 
@@ -362,51 +508,79 @@
   }
 
   let isTripsUserAuthenticated = false;
+  let tripsState: Trip[] = [];
+  const weatherCache = new Map<string, WeatherData | null>();
+
+  function escapeHtml(value: string) {
+    return value
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
+  function setStatus(message: string, type?: "success" | "error") {
+    const element = document.getElementById("trips-form-status");
+    if (!element) return;
+
+    element.textContent = message;
+    element.classList.toggle("success", type === "success");
+    element.classList.toggle("error", type === "error");
+  }
+
+  function setTripsView(view: "list" | "new") {
+    document.querySelectorAll("[data-trips-view]").forEach((button) => {
+      const isActive = button.getAttribute("data-trips-view") === view;
+      button.classList.toggle("is-active", isActive);
+      button.setAttribute("aria-selected", String(isActive));
+    });
+
+    document.querySelector("#trips-list-view")?.classList.toggle("is-active", view === "list");
+    document.querySelector("#trips-new-view")?.classList.toggle("is-active", view === "new");
+  }
+
+  function calculateDays(startDate: string, endDate: string) {
+    const start = new Date(`${startDate}T00:00:00`);
+    const end = new Date(`${endDate}T00:00:00`);
+    return Math.floor((end.getTime() - start.getTime()) / 86400000) + 1;
+  }
+
+  function formatDate(dateString: string) {
+    const date = new Date(`${dateString}T00:00:00`);
+    return date.toLocaleDateString("es-AR", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+  }
 
   function renderTripsLoggedOut() {
+    tripsState = [];
+    updateTripsCount();
+
     const tripsList = document.getElementById("trips-list");
     if (!tripsList) return;
 
     tripsList.innerHTML = `
       <div class="empty-state">
-        <p>Inicia sesion para guardar y consultar tus viajes.</p>
+        <p>Inicia sesion para guardar viajes y abrir el detalle de cada destino.</p>
       </div>
     `;
   }
 
-  function setStatus(
-    elementId: string,
-    message: string,
-    type: "success" | "error"
-  ) {
-    const element = document.getElementById(elementId);
-    if (!element) return;
-
-    element.textContent = message;
-    element.className = `status-message ${type}`;
-
-    if (type === "success") {
-      setTimeout(() => {
-        element.className = "status-message";
-      }, 3000);
+  function updateTripsCount() {
+    const count = document.getElementById("trips-count");
+    if (count) {
+      count.textContent = String(tripsState.length);
     }
   }
 
-  function calculateDays(startDate: string, endDate: string): number {
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    return Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-  }
-
-  function formatDate(dateString: string): string {
-    const date = new Date(dateString + "T00:00:00");
-    return date.toLocaleDateString("es-AR", {
-      month: "short",
-      day: "numeric",
-    });
-  }
-
   async function fetchTripWeather(trip: Trip): Promise<WeatherData | null> {
+    if (weatherCache.has(trip.id)) {
+      return weatherCache.get(trip.id) ?? null;
+    }
+
     try {
       const response = await fetch("/api/trips/weather", {
         method: "POST",
@@ -419,95 +593,105 @@
       });
 
       if (!response.ok) {
-        console.error("Error fetching weather:", response.status);
+        weatherCache.set(trip.id, null);
         return null;
       }
 
-      return await response.json();
+      const data = await response.json();
+      weatherCache.set(trip.id, data);
+      return data;
     } catch (error) {
       console.error("Error fetching trip weather:", error);
+      weatherCache.set(trip.id, null);
       return null;
     }
   }
 
-  function renderWeatherForTrip(
-    trip: Trip,
-    weatherData: WeatherData | null
-  ): string {
+  function renderWeatherForTrip(weatherData: WeatherData | null) {
     if (!weatherData) {
-      return `<div class="weather-unavailable">No se pudo cargar el pronóstico</div>`;
+      return `<p class="weather-unavailable">No se pudo cargar el pronostico.</p>`;
     }
 
     if (!weatherData.availableForecast) {
-      return `<div class="weather-unavailable">${weatherData.reason || "El pronóstico todavía no está disponible para estas fechas."}</div>`;
+      return `<p class="weather-unavailable">${escapeHtml(weatherData.reason || "El pronostico todavia no esta disponible para estas fechas.")}</p>`;
     }
 
     if (weatherData.forecastDays.length === 0) {
-      return `<div class="weather-unavailable">Sin información meteorológica disponible</div>`;
+      return `<p class="weather-unavailable">Sin informacion meteorologica disponible.</p>`;
     }
 
     const daysHtml = weatherData.forecastDays
-      .map(
-        (day) => `
-      <div class="weather-day">
-        <div class="weather-date">${formatDate(day.date)}</div>
-        <img src="${day.conditionIcon}" alt="${day.condition}" class="weather-icon" />
-        <div class="weather-temp">${Math.round(day.avgTempC)}°</div>
-        <div class="weather-condition">${day.condition}</div>
-      </div>
-    `
-      )
+      .map((day) => {
+        const condition = escapeHtml(day.condition);
+        const icon = escapeHtml(day.conditionIcon);
+
+        return `
+          <div class="weather-day">
+            <span class="weather-date">${formatDate(day.date)}</span>
+            <img src="${icon}" alt="${condition}" class="weather-icon" />
+            <div class="weather-temp">${Math.round(day.avgTempC)} C</div>
+            <div class="weather-condition">${condition}</div>
+            <div class="weather-condition">Lluvia ${Number(day.chanceOfRain) || 0}%</div>
+          </div>
+        `;
+      })
       .join("");
 
-    return `
-      <div class="weather-days">
-        ${daysHtml}
-      </div>
-    `;
+    return `<div class="weather-days">${daysHtml}</div>`;
   }
 
-  function renderTrip(trip: Trip): HTMLElement {
+  function renderTripCard(trip: Trip) {
+    const card = document.createElement("article");
     const days = calculateDays(trip.start_date, trip.end_date);
-    const card = document.createElement("div");
+
     card.className = "trip-card";
     card.id = `trip-${trip.id}`;
-
     card.innerHTML = `
-      <div class="trip-header">
+      <div class="trip-card-header">
         <div>
-          <h4 class="trip-title">${trip.trip_name}</h4>
-          <p class="trip-destination">${trip.destination_name}</p>
-          <div class="trip-dates">
-            ${formatDate(trip.start_date)} - ${formatDate(trip.end_date)}
-            <span class="trip-days">${days} ${days === 1 ? "día" : "días"}</span>
-          </div>
+          <h4>${escapeHtml(trip.trip_name)}</h4>
+          <p class="trip-destination">${escapeHtml(trip.destination_name)}</p>
+          <p class="trip-dates">${formatDate(trip.start_date)} - ${formatDate(trip.end_date)}</p>
         </div>
-        <div class="trip-actions">
-          <button class="btn-delete" data-trip-id="${trip.id}">Eliminar</button>
-        </div>
+        <span class="trip-days">${days} ${days === 1 ? "dia" : "dias"}</span>
       </div>
-      <div class="trip-weather">
-        <div class="weather-title">Pronóstico del viaje</div>
-        <div class="weather-loading">Cargando pronóstico...</div>
+      <p class="trip-meta">Guardado el ${formatDate(trip.created_at.slice(0, 10))}</p>
+      <div class="trip-actions">
+        <button class="trip-action" type="button" data-trip-detail="${trip.id}">Ver detalle</button>
+        <button class="trip-action danger" type="button" data-trip-delete="${trip.id}">Eliminar</button>
       </div>
     `;
 
-    // Attach delete handler
-    card
-      .querySelector(".btn-delete")
-      ?.addEventListener("click", () => deleteTrip(trip.id));
-
-    // Load weather asynchronously
-    (async () => {
-      const weatherData = await fetchTripWeather(trip);
-      const weatherContainer = card.querySelector(".trip-weather");
-      if (weatherContainer) {
-        const weatherHtml = renderWeatherForTrip(trip, weatherData);
-        weatherContainer.innerHTML = `<div class="weather-title">Pronóstico del viaje</div>${weatherHtml}`;
-      }
-    })();
+    card.querySelector("[data-trip-detail]")?.addEventListener("click", () => openTripDetail(trip.id));
+    card.querySelector("[data-trip-delete]")?.addEventListener("click", () => deleteTrip(trip.id));
 
     return card;
+  }
+
+  function renderTripsList() {
+    const tripsList = document.getElementById("trips-list");
+    if (!tripsList) return;
+
+    updateTripsCount();
+
+    if (!isTripsUserAuthenticated) {
+      renderTripsLoggedOut();
+      return;
+    }
+
+    if (tripsState.length === 0) {
+      tripsList.innerHTML = `
+        <div class="empty-state">
+          <p>Todavia no guardaste viajes. Crea uno desde la pestana Nuevo.</p>
+        </div>
+      `;
+      return;
+    }
+
+    tripsList.innerHTML = "";
+    tripsState.forEach((trip) => {
+      tripsList.appendChild(renderTripCard(trip));
+    });
   }
 
   async function loadTrips() {
@@ -517,107 +701,124 @@
     }
 
     try {
+      setStatus("Cargando viajes...");
       const response = await fetch("/api/trips");
 
       if (response.status === 401) {
         isTripsUserAuthenticated = false;
         renderTripsLoggedOut();
+        setStatus("");
         return;
       }
+
+      const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {
-        console.error("Error loading trips:", response.status);
-        return;
+        throw new Error(data.error || "No se pudieron cargar los viajes");
       }
 
-      const data = await response.json();
-      const trips: Trip[] = data.trips || [];
-      const tripsList = document.getElementById("trips-list");
-
-      if (!tripsList) return;
-
-      if (trips.length === 0) {
-        tripsList.innerHTML = `
-          <div class="empty-state">
-            <p>Todavía no guardaste viajes. Creá uno para ver el clima de tus próximas vacaciones.</p>
-          </div>
-        `;
-        return;
-      }
-
-      tripsList.innerHTML = "";
-      trips.forEach((trip) => {
-        tripsList.appendChild(renderTrip(trip));
-      });
+      tripsState = data.trips || [];
+      renderTripsList();
+      setStatus("");
     } catch (error) {
       console.error("Error loading trips:", error);
+      setStatus(error instanceof Error ? error.message : "No se pudieron cargar los viajes", "error");
     }
   }
 
+  async function openTripDetail(tripId: string) {
+    const trip = tripsState.find((item) => item.id === tripId);
+    const modal = document.getElementById("trip-detail-modal");
+    const title = document.getElementById("trip-detail-title");
+    const destination = document.getElementById("trip-detail-destination");
+    const body = document.getElementById("trip-detail-body");
+
+    if (!trip || !modal || !title || !destination || !body) return;
+
+    const days = calculateDays(trip.start_date, trip.end_date);
+
+    title.textContent = trip.trip_name;
+    destination.textContent = trip.destination_name;
+    body.innerHTML = `
+      <div class="trip-detail-grid">
+        <div class="trip-detail-stat">
+          <span>Inicio</span>
+          <strong>${formatDate(trip.start_date)}</strong>
+        </div>
+        <div class="trip-detail-stat">
+          <span>Fin</span>
+          <strong>${formatDate(trip.end_date)}</strong>
+        </div>
+        <div class="trip-detail-stat">
+          <span>Duracion</span>
+          <strong>${days} ${days === 1 ? "dia" : "dias"}</strong>
+        </div>
+      </div>
+      <section class="weather-panel">
+        <h4>Pronostico del viaje</h4>
+        <p class="weather-loading">Cargando pronostico...</p>
+      </section>
+    `;
+
+    modal.classList.remove("hidden");
+    modal.setAttribute("aria-hidden", "false");
+
+    const weatherData = await fetchTripWeather(trip);
+    const weatherPanel = body.querySelector(".weather-panel");
+    if (weatherPanel) {
+      weatherPanel.innerHTML = `
+        <h4>Pronostico del viaje</h4>
+        ${renderWeatherForTrip(weatherData)}
+      `;
+    }
+  }
+
+  function closeTripDetail() {
+    const modal = document.getElementById("trip-detail-modal");
+    if (!modal) return;
+
+    modal.classList.add("hidden");
+    modal.setAttribute("aria-hidden", "true");
+  }
+
   async function deleteTrip(tripId: string) {
-    if (!confirm("¿Estás seguro de que deseas eliminar este viaje?")) {
+    if (!window.confirm("Eliminar este viaje?")) {
       return;
     }
 
     try {
-      const response = await fetch(`/api/trips?id=${tripId}`, {
+      const response = await fetch(`/api/trips?id=${encodeURIComponent(tripId)}`, {
         method: "DELETE",
       });
+      const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {
-        const error = await response.json();
-        setStatus("trips-form-status", error.error || "Error al eliminar", "error");
-        return;
+        throw new Error(data.error || "No se pudo eliminar el viaje");
       }
 
-      // Remove card from UI
-      const card = document.getElementById(`trip-${tripId}`);
-      if (card) {
-        card.remove();
-      }
-
-      setStatus(
-        "trips-form-status",
-        "Viaje eliminado correctamente",
-        "success"
-      );
-
-      // Reload trips in case list is empty
-      loadTrips();
+      tripsState = tripsState.filter((trip) => trip.id !== tripId);
+      weatherCache.delete(tripId);
+      renderTripsList();
+      closeTripDetail();
+      setStatus("Viaje eliminado correctamente", "success");
     } catch (error) {
       console.error("Error deleting trip:", error);
-      setStatus(
-        "trips-form-status",
-        "No se pudo eliminar el viaje",
-        "error"
-      );
+      setStatus(error instanceof Error ? error.message : "No se pudo eliminar el viaje", "error");
     }
   }
 
-  async function handleFormSubmit(e: Event) {
-    e.preventDefault();
+  async function handleFormSubmit(event: Event) {
+    event.preventDefault();
 
     if (!isTripsUserAuthenticated) {
-      setStatus(
-        "trips-form-status",
-        "Inicia sesion para guardar viajes",
-        "error"
-      );
+      setStatus("Inicia sesion para guardar viajes", "error");
       return;
     }
 
-    const nameInput = document.getElementById(
-      "trip-name"
-    ) as HTMLInputElement | null;
-    const destinationInput = document.getElementById(
-      "trip-destination"
-    ) as HTMLInputElement | null;
-    const startInput = document.getElementById(
-      "trip-start-date"
-    ) as HTMLInputElement | null;
-    const endInput = document.getElementById(
-      "trip-end-date"
-    ) as HTMLInputElement | null;
+    const nameInput = document.getElementById("trip-name") as HTMLInputElement | null;
+    const destinationInput = document.getElementById("trip-destination") as HTMLInputElement | null;
+    const startInput = document.getElementById("trip-start-date") as HTMLInputElement | null;
+    const endInput = document.getElementById("trip-end-date") as HTMLInputElement | null;
 
     if (!nameInput || !destinationInput || !startInput || !endInput) return;
 
@@ -626,34 +827,18 @@
     const startDate = startInput.value;
     const endDate = endInput.value;
 
-    // Frontend validation
     if (!tripName || !destination || !startDate || !endDate) {
-      setStatus("trips-form-status", "Completa todos los campos", "error");
+      setStatus("Completa todos los campos", "error");
       return;
     }
 
-    const startDateObj = new Date(startDate);
-    const endDateObj = new Date(endDate);
-
-    if (startDateObj > endDateObj) {
-      setStatus(
-        "trips-form-status",
-        "La fecha de inicio no puede ser posterior a la fecha de fin",
-        "error"
-      );
+    if (new Date(`${startDate}T00:00:00`) > new Date(`${endDate}T00:00:00`)) {
+      setStatus("La fecha de inicio no puede ser posterior a la fecha de fin", "error");
       return;
     }
 
-    const durationDays = Math.ceil(
-      (endDateObj.getTime() - startDateObj.getTime()) / (1000 * 60 * 60 * 24)
-    );
-
-    if (durationDays > 30) {
-      setStatus(
-        "trips-form-status",
-        "El viaje no puede exceder 30 días",
-        "error"
-      );
+    if (calculateDays(startDate, endDate) > 31) {
+      setStatus("El viaje no puede exceder 30 dias", "error");
       return;
     }
 
@@ -668,26 +853,23 @@
           endDate,
         }),
       });
+      const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {
-        const error = await response.json();
-        setStatus("trips-form-status", error.error || "Error al guardar", "error");
-        return;
+        throw new Error(data.error || "No se pudo guardar el viaje");
       }
 
-      setStatus("trips-form-status", "Viaje guardado correctamente", "success");
-
-      // Clear form
       nameInput.value = "";
       destinationInput.value = "";
       startInput.value = "";
       endInput.value = "";
 
-      // Reload trips
-      loadTrips();
+      await loadTrips();
+      setTripsView("list");
+      setStatus("Viaje guardado correctamente", "success");
     } catch (error) {
       console.error("Error saving trip:", error);
-      setStatus("trips-form-status", "No se pudo guardar el viaje", "error");
+      setStatus(error instanceof Error ? error.message : "No se pudo guardar el viaje", "error");
     }
   }
 
@@ -697,32 +879,39 @@
       const data = await response.json();
 
       isTripsUserAuthenticated = Boolean(data.user);
-
-      if (isTripsUserAuthenticated) {
-        loadTrips();
-      } else {
-        renderTripsLoggedOut();
-      }
+      await loadTrips();
     } catch (error) {
       console.error("Error checking trip session:", error);
       renderTripsLoggedOut();
     }
   }
 
-  window.addEventListener("auth:changed", (event) => {
-    isTripsUserAuthenticated = Boolean(event.detail?.user);
+  document.querySelectorAll("[data-trips-view]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const view = button.getAttribute("data-trips-view") === "new" ? "new" : "list";
+      setTripsView(view);
+    });
+  });
 
-    if (isTripsUserAuthenticated) {
-      loadTrips();
-    } else {
-      renderTripsLoggedOut();
+  document.getElementById("trips-form")?.addEventListener("submit", handleFormSubmit);
+  document.getElementById("trip-detail-close")?.addEventListener("click", closeTripDetail);
+  document.getElementById("trip-detail-modal")?.addEventListener("click", (event) => {
+    if (event.target === event.currentTarget) {
+      closeTripDetail();
     }
   });
 
-  const form = document.getElementById("trips-form");
-  if (form) {
-    form.addEventListener("submit", handleFormSubmit);
-  }
+  window.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      closeTripDetail();
+    }
+  });
+
+  window.addEventListener("auth:changed", async (event) => {
+    isTripsUserAuthenticated = Boolean(event.detail?.user);
+    weatherCache.clear();
+    await loadTrips();
+  });
 
   initializeTripsPanel();
 </script>

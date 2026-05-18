@@ -43,6 +43,11 @@ export async function requireAuth(
 ): Promise<AuthResult | null> {
   const accessToken = context.cookies.get(ACCESS_TOKEN_COOKIE)?.value ?? "";
   const refreshToken = context.cookies.get(REFRESH_TOKEN_COOKIE)?.value ?? "";
+
+  if (!accessToken && !refreshToken) {
+    return null;
+  }
+
   const supabase = createSupabaseServerClient();
 
   if (accessToken) {

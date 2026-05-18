@@ -1,46 +1,57 @@
--- Create the trips table
-CREATE TABLE IF NOT EXISTS trips (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  trip_name TEXT NOT NULL,
-  destination_name TEXT NOT NULL,
-  destination_query TEXT NOT NULL,
-  start_date DATE NOT NULL,
-  end_date DATE NOT NULL,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  CONSTRAINT valid_dates CHECK (start_date <= end_date),
-  CONSTRAINT valid_trip_duration CHECK ((end_date - start_date) <= '30 days'::INTERVAL)
+create extension if not exists pgcrypto;
+
+create table if not exists public.trips (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  trip_name text not null,
+  destination_name text not null,
+  destination_query text not null,
+  start_date date not null,
+  end_date date not null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  constraint trips_valid_dates check (start_date <= end_date),
+  constraint trips_max_30_day_span check ((end_date - start_date) <= 30)
 );
 
--- Create index for faster queries
-CREATE INDEX IF NOT EXISTS idx_trips_user_id ON trips(user_id);
-CREATE INDEX IF NOT EXISTS idx_trips_created_at ON trips(created_at);
+create index if not exists trips_user_id_idx on public.trips(user_id);
+create index if not exists trips_start_date_idx on public.trips(start_date);
+create index if not exists trips_created_at_idx on public.trips(created_at desc);
 
--- Enable Row Level Security
-ALTER TABLE trips ENABLE ROW LEVEL SECURITY;
+alter table public.trips enable row level security;
 
--- Policy 1: Users can SELECT their own trips
-CREATE POLICY "Users can SELECT their own trips"
-  ON trips
-  FOR SELECT
-  USING (auth.uid() = user_id);
+grant select, insert, update, delete on public.trips to authenticated;
 
--- Policy 2: Users can INSERT their own trips
-CREATE POLICY "Users can INSERT their own trips"
-  ON trips
-  FOR INSERT
-  WITH CHECK (auth.uid() = user_id);
+drop policy if exists "Users can SELECT their own trips" on public.trips;
+drop policy if exists "Users can INSERT their own trips" on public.trips;
+drop policy if exists "Users can UPDATE their own trips" on public.trips;
+drop policy if exists "Users can DELETE their own trips" on public.trips;
+drop policy if exists trips_select_own on public.trips;
+drop policy if exists trips_insert_own on public.trips;
+drop policy if exists trips_update_own on public.trips;
+drop policy if exists trips_delete_own on public.trips;
 
--- Policy 3: Users can UPDATE their own trips
-CREATE POLICY "Users can UPDATE their own trips"
-  ON trips
-  FOR UPDATE
-  USING (auth.uid() = user_id)
-  WITH CHECK (auth.uid() = user_id);
+create policy trips_select_own
+  on public.trips
+  for select
+  to authenticated
+  using (auth.uid() = user_id);
 
--- Policy 4: Users can DELETE their own trips
-CREATE POLICY "Users can DELETE their own trips"
-  ON trips
-  FOR DELETE
-  USING (auth.uid() = user_id);
+create policy trips_insert_own
+  on public.trips
+  for insert
+  to authenticated
+  with check (auth.uid() = user_id);
+
+create policy trips_update_own
+  on public.trips
+  for update
+  to authenticated
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
+create policy trips_delete_own
+  on public.trips
+  for delete
+  to authenticated
+  using (auth.uid() = user_id);
