@@ -3,6 +3,11 @@ dist/
 # generated types
 .astro/
 
+# test artifacts
+coverage/
+test-results/
+playwright-report/
+
 # dependencies
 node_modules/
 
@@ -27,3 +32,6 @@ pnpm-debug.log*
 
 
 .ruflo/
+
+# instrucciones locales (no van al repo)
+INSTRUCCIONES.md
