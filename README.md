@@ -1,10 +1,47 @@
 # 🌦️ WhatTheWeather — Dashboard de clima
 
+![CI/CD Pipeline](https://github.com/emitejadaa/whatTheWeather/actions/workflows/ci.yml/badge.svg)
+
 ## 🔗 Deploy
 
 La aplicación está desplegada en:
 
 👉 https://what-the-weather.vercel.app/
+
+---
+
+## 🔀 Convención de ramas
+
+Las ramas siguen la siguiente convención:
+
+| Prefijo | Cuándo usarlo |
+|---|---|
+| `feature/nombre-feature` | Nueva funcionalidad |
+| `fix/nombre-bug` | Corrección de bug |
+| `docs/nombre-doc` | Solo documentación |
+| `ci/nombre-cambio` | Cambios en el pipeline |
+
+Ningún cambio se mergea directo a `main`. Todo pasa por un Pull Request que referencia el issue correspondiente (ej. `closes #12`), y debe ser aprobado por un integrante antes de mergearlo.
+
+---
+
+## 🧪 Testing y calidad
+
+```bash
+# Lint
+npm run lint
+
+# Tests unitarios
+npm run test
+
+# Tests unitarios con cobertura
+npm run test:coverage
+
+# Tests E2E (requiere el servidor corriendo)
+npm run test:e2e
+```
+
+Ver [CALIDAD.md](./CALIDAD.md) para la estrategia completa de calidad.
 
 ---
 
